@@ -1,0 +1,49 @@
+id: mannequin-training
+title: Training on a mannequin
+summary: Combos, stats, the leaderboard, loadouts, skins, shields and a redstone pulse for your contraptions.
+intro: |
+  Hitting a dummy is easy. Hitting it well, and knowing how well, is the hobby.
+icon: DIAMOND_SWORD
+category: Games
+order: 31
+module: mannequin
+aliases: [combo, dps, leaderboard, loadout, skin, redstone, shield]
+keywords: [combat, damage, stats, hits, comparator, barrel, armor, enchant, potion, golden apple]
+commands: []
+related: [mannequins]
+sections:
+  - question: What do I see when I hit it?
+    title: Feedback
+    text: |
+      Every hit shows you the damage and your combo streak. Hits that follow within {setting:mannequin:combo-window-millis|number} ms of each other are one combo; a longer gap starts a fresh one. Armor on the mannequin wears down as it takes hits.
+      A hit worth {setting:mannequin:one-shot-threshold|number} damage or more counts as a hit that would have killed a bare, full-health player.
+  - question: Where are the stats?
+    title: Stats
+    text: |
+      {cmd:/mannequin stats <id>} shows total damage, hits, current and longest combo and average damage. From there <white>Reset stats</white> clears the tally and the leaderboard after a confirmation.
+  - question: What is the leaderboard?
+    title: Leaderboard
+    text: |
+      Who has hit this mannequin hardest — total damage, hits and the weapons used. Click somebody to see a breakdown per weapon: hits, total, average and highest hit, bare hands included.
+  - question: How do I dress a mannequin?
+    title: Loadout
+    text: |
+      {cmd:/mannequin loadout <id>} (player, zombie and skeleton only) opens the slots: armor and both hands. Click to pick a material, right-click to enchant, shift-right-click to remove. <white>Copy my current gear</white> takes everything you wear and hold, enchants too.
+      Enchantments are free-form: combinations vanilla refuses and levels above the usual maximum are allowed.
+  - question: Can it block with a shield?
+    title: Shield
+    when: mannequin:blocking-enabled
+    text: |
+      Yes, if it holds a shield in its main hand it raises it against an attacker within {setting:mannequin:shield-range-blocks|count} blocks. A shield in its off hand is never raised. You can switch that on its edit page.
+  - question: How do I change its skin?
+    title: Skin
+    text: |
+      {cmd:/mannequin skin <id>} (player kind only): pick an online player, type any Minecraft username — even somebody who has never joined — or reset to the default profile.
+  - question: Can I build redstone with it?
+    title: Redstone
+    text: |
+      Switch on <white>Redstone signal</white> on its page. A barrel is placed one block under its feet; after a hit it fills so a comparator beside it reads 0 to 15, scaled to the hit — the one-shot threshold is a 15. The signal is a pulse of {setting:mannequin:redstone-pulse-ticks|ticks}, not a state. Put the comparator next to the barrel itself, not at the mannequin's feet.
+  - question: Can I feed it potions?
+    title: Potions and food
+    text: |
+      Drop a potion, golden apple or enchanted golden apple at its feet and it consumes it, with the effects. A Harming potion hurts it like any damage.

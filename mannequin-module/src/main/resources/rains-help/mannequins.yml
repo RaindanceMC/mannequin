@@ -1,0 +1,54 @@
+id: mannequins
+title: Training dummies
+summary: Place a mannequin, choose its kind, share it, and what happens when you hit it so hard it dies.
+intro: |
+  A target that does not hit back, does not leave, and is — thankfully — quite patient. Place one, dress it, hit it, and find out how good you really are.
+icon: ARMOR_STAND
+category: Games
+order: 30
+module: mannequin
+aliases: [mannequin, dummy, dummies, training, training-dummy, target, pvp-practice]
+keywords: [create, remove, kind, zombie, skeleton, wither, iron golem, player, share, trust, claim, health, respawn, price, refund]
+commands: [mannequin]
+related: [mannequin-training]
+sections:
+  - question: What is a mannequin?
+    title: What it is
+    text: |
+      A training dummy you place where you stand. It stands perfectly still, never wanders off, and hostile mobs leave it alone. You can hit it, equip it, give it a skin and read its stats. {run:/mannequin} opens a list of yours and the ones shared with you.
+  - question: How do I make one?
+    title: Creating
+    text: |
+      Stand where it should be and type {cmd:/mannequin create [kind]} — it faces the way you look. {if:mannequin:open-creation}Anybody may make one.{else}Making one needs the <white>rainsmannequins.mannequin.create</white> permission — ask staff or a builder.{/if}
+      The kind is <white>player</white> (the default), <white>zombie</white>, <white>skeleton</white>, <white>wither</white> or <white>iron_golem</white>. A mistyped kind is told off rather than guessed.
+      {if:mannequin:price}A mannequin costs {setting:mannequin:price|money}, taken when you make it and given back if it could not be placed.{else}It is free.{/if}
+  - question: What are the kinds?
+    title: Kinds
+    text: |
+      <white>Player</white> wears a skin and can be dressed. <white>Zombie</white> and <white>skeleton</white> can be dressed too and do not burn in daylight. <white>Wither</white> and <white>iron golem</white> are big targets with more health — dressing and skins are not for them. All of them stay put: no gravity, no knockback, no AI.
+  - question: How much health does it have?
+    title: Health
+    text: |
+      It is not invincible: {setting:mannequin:max-health|number} health points by default (a player's own 20 are 10 hearts), or a number of your own — the Health page of a mannequin has presets (zombie, spider, witch, iron golem, wither, ender dragon, warden …) and a field for any number.
+  - question: What happens when it dies?
+    title: Death and respawn
+    text: |
+      Nothing drops. {if:mannequin:respawn-delay-seconds > 0}After {setting:mannequin:respawn-delay-seconds|seconds} an identical one — same block, same loadout, same skin — takes its place.{else}An identical one takes its place at once.{/if} The training room never has a gap for long.
+  - question: Can others use my mannequin?
+    title: Sharing
+    text: |
+      On a mannequin's page click <white>Shared with</white> and trust somebody: they can open and edit it, and remove it, just like you. They are told. Click a name there to stop trusting them. Mannequins shared with you show in your list too.
+  - question: Can a mannequin belong to a claim?
+    title: Claims
+    when: "@module:claims"
+    text: |
+      Yes. Stand inside a claim you own and click the claim button on the mannequin's page: it then appears on that claim's own page too. Click again to take it off.
+  - question: How do I remove one?
+    title: Removing
+    text: |
+      {cmd:/mannequin remove <id>} asks you first; add <white>confirm</white> to do it. Its loadout, skin and tally go with it for good.
+      {if:mannequin:refund-percent-on-remove > 0}The owner gets {setting:mannequin:refund-percent-on-remove|percent} of the price back.{/if} Owners and trusted players can remove it; staff with <white>rainsmannequins.mannequin.remove.any</white> can remove any.
+  - question: Which mannequin commands are there?
+    title: Commands
+    text: |
+      {cmd:/mannequin list} lists yours with id, name and world. {cmd:/mannequin loadout <id>}, {cmd:/mannequin skin <id>} and {cmd:/mannequin stats <id>} open those pages — only for the owner and the trusted. {cmd:/mannequin remove <id>} as above. Tab shows your ids. The edit page also lets you rename it.
