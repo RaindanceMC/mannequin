@@ -5,7 +5,10 @@ import de.raindancer.modules.mannequin.MannequinServices;
 import de.raindancer.modules.mannequin.MannequinSettings;
 import de.raindancer.modules.mannequin.model.Mannequin;
 import de.raindancer.modules.mannequin.model.MannequinKind;
+import de.raindancer.modules.mannequin.model.ItemSpec;
+import de.raindancer.modules.mannequin.model.StatuePose;
 import de.raindancer.modules.mannequin.rules.CreateMannequinRule;
+import de.raindancer.modules.mannequin.rules.StatueTargetRule;
 import de.raindancer.modules.mannequin.util.PermissionNodes;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import de.raindancer.core.platform.util.Scheduling;
@@ -39,6 +42,10 @@ public final class MannequinCommand implements IMannequinCommand {
 
     private final Supplier<MannequinServices> services;
     private final CreateMannequinRule createRule = new CreateMannequinRule();
+    private final StatueTargetRule targetRule = new StatueTargetRule();
+    private static final double STATUE_REACH = 4;
+    private static final String POSE_NAMES = java.util.Arrays.stream(StatuePose.values())
+            .map(StatuePose::typed).collect(java.util.stream.Collectors.joining(", "));
 
     public MannequinCommand(Supplier<MannequinServices> services) {
         this.services = services;
@@ -130,6 +137,28 @@ public final class MannequinCommand implements IMannequinCommand {
             live.messages().send(sender, "mannequin.statue.usage");
             return;
         }
+        // These words win over a player of the same name; that player's statue is placed by
+        // somebody else typing it, or by any other spelling of the command there is none of.
+        switch (args[1].toLowerCase(Locale.ROOT)) {
+            case "pose" -> {
+                statuePose(live, player, args);
+                return;
+            }
+            case "hold" -> {
+                withStatue(live, player, args, 2, statue -> statueHold(live, player, statue));
+                return;
+            }
+            case "remove" -> {
+                withStatue(live, player, args, 2, statue -> {
+                    live.mannequins().remove(statue.id());
+                    live.messages().send(player, "mannequin.statue.removed", "name", statue.displayName(),
+                            "id", statue.id());
+                });
+                return;
+            }
+            default -> {
+            }
+        }
         String typed = args[1].trim();
         // Captured now: where they stood when they typed it, not wherever they walked during a lookup.
         org.bukkit.Location anchor = player.getLocation();
@@ -150,6 +179,78 @@ public final class MannequinCommand implements IMannequinCommand {
                     }
                     placeStatue(live, player, found.getId(), found.getName(), anchor);
                 }));
+    }
+
+    /** {@code /mannequin statue pose <pose> [id]} */
+    private void statuePose(MannequinServices live, Player player, String[] args) {
+        Optional<StatuePose> pose = args.length >= 3 ? StatuePose.byName(args[2]) : Optional.empty();
+        if (pose.isEmpty()) {
+            live.messages().send(player, "mannequin.statue.pose.usage", "poses", POSE_NAMES);
+            return;
+        }
+        withStatue(live, player, args, 3, statue -> {
+            Mannequin posed = statue.withPose(pose.get());
+            live.mannequins().save(posed);
+            live.mannequins().spawn(posed);
+            live.messages().send(player, "mannequin.statue.pose.done", "name", statue.displayName(),
+                    "pose", pose.get().typed());
+        });
+    }
+
+    /** {@code /mannequin statue hold [id]}: what is in your hands, exactly, an empty hand emptying its hand. */
+    private void statueHold(MannequinServices live, Player player, Mannequin statue) {
+        org.bukkit.inventory.PlayerInventory hands = player.getInventory();
+        Mannequin holding = statue
+                .withSlot(org.bukkit.inventory.EquipmentSlot.HAND, held(hands.getItemInMainHand()))
+                .withSlot(org.bukkit.inventory.EquipmentSlot.OFF_HAND, held(hands.getItemInOffHand()));
+        live.mannequins().save(holding);
+        live.mannequins().spawn(holding);
+        live.messages().send(player, "mannequin.statue.hold.done", "name", statue.displayName());
+    }
+
+    private static ItemSpec held(org.bukkit.inventory.ItemStack stack) {
+        if (stack == null || stack.getType().isAir()) {
+            return null;
+        }
+        org.bukkit.inventory.ItemStack one = stack.clone();
+        one.setAmount(1);
+        return ItemSpec.exactly(one);
+    }
+
+    /**
+     * The statue named by {@code args[idAt]}, or — none named — the one looked at, or the closest
+     * within {@link #STATUE_REACH} blocks.
+     */
+    private void withStatue(MannequinServices live, Player player, String[] args, int idAt,
+                            java.util.function.Consumer<Mannequin> action) {
+        Optional<Mannequin> statue;
+        if (args.length > idAt) {
+            statue = live.registry().get(args[idAt]);
+            if (statue.isEmpty()) {
+                live.messages().send(player, "mannequin.unknown-id", "id", args[idAt]);
+                return;
+            }
+            if (!statue.get().isStatue()) {
+                live.messages().send(player, "mannequin.statue.not-a-statue", "id", args[idAt]);
+                return;
+            }
+        } else {
+            org.bukkit.entity.Entity looked = player.getTargetEntity(8, false);
+            statue = Optional.ofNullable(looked)
+                    .flatMap(entity -> live.registry().idFor(entity.getUniqueId()))
+                    .flatMap(live.registry()::get)
+                    .filter(Mannequin::isStatue);
+            if (statue.isEmpty()) {
+                org.bukkit.Location at = player.getLocation();
+                statue = targetRule.nearest(live.registry().all(), at.getWorld().getName(),
+                        at.getX(), at.getY(), at.getZ(), STATUE_REACH);
+            }
+            if (statue.isEmpty()) {
+                live.messages().send(player, "mannequin.statue.none-here");
+                return;
+            }
+        }
+        action.accept(statue.get());
     }
 
     private void placeStatue(MannequinServices live, Player player, UUID depicted, String name,
@@ -256,10 +357,22 @@ public final class MannequinCommand implements IMannequinCommand {
         }
         if (args.length == 2 && sub.equals("statue")) {
             String typed = args[1].toLowerCase(Locale.ROOT);
-            return Bukkit.getOnlinePlayers().stream()
-                    .map(Player::getName)
+            return java.util.stream.Stream.concat(java.util.stream.Stream.of("pose", "hold", "remove"),
+                            Bukkit.getOnlinePlayers().stream().map(Player::getName))
                     .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(typed))
                     .toList();
+        }
+        if (args.length == 3 && sub.equals("statue") && args[1].equalsIgnoreCase("pose")) {
+            String typed = args[2].toLowerCase(Locale.ROOT);
+            return java.util.Arrays.stream(StatuePose.values()).map(StatuePose::typed)
+                    .filter(name -> name.startsWith(typed)).toList();
+        }
+        boolean statueId = sub.equals("statue") && ((args.length == 3 && List.of("hold", "remove")
+                .contains(args[1].toLowerCase(Locale.ROOT))) || (args.length == 4 && args[1].equalsIgnoreCase("pose")));
+        if (statueId) {
+            String typed = args[args.length - 1].toLowerCase(Locale.ROOT);
+            return services.get().registry().all().stream().filter(Mannequin::isStatue).map(Mannequin::id)
+                    .filter(id -> id.toLowerCase(Locale.ROOT).startsWith(typed)).toList();
         }
         if (args.length == 2 && List.of("remove", "loadout", "skin", "stats").contains(sub)
                 && source.getSender() instanceof Player player) {

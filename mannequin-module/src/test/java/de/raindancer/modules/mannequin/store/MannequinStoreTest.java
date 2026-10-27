@@ -3,6 +3,7 @@ package de.raindancer.modules.mannequin.store;
 import de.raindancer.modules.mannequin.model.ItemSpec;
 import de.raindancer.modules.mannequin.model.Mannequin;
 import de.raindancer.modules.mannequin.model.MannequinKind;
+import de.raindancer.modules.mannequin.model.StatuePose;
 import org.bukkit.Material;
 import org.bukkit.inventory.EquipmentSlot;
 import org.junit.jupiter.api.DisplayName;
@@ -227,5 +228,29 @@ class MannequinStoreTest {
         store.save(Mannequin.freshlyPlaced("MQ1", UUID.randomUUID(), "world", 0, 64, 0));
 
         assertThat(store.loadAll().getFirst().statueOf()).isNull();
+    }
+
+    @Test
+    @DisplayName("a pose round-trips, and a file without one stands")
+    void poseRoundTrips() {
+        MannequinStore store = new MannequinStore(folder);
+        store.save(Mannequin.freshlyPlaced("MQ1", UUID.randomUUID(), "world", 0, 64, 0).withPose(StatuePose.SWIMMING));
+        store.save(Mannequin.freshlyPlaced("MQ2", UUID.randomUUID(), "world", 0, 64, 0));
+
+        assertThat(store.loadAll()).extracting(Mannequin::pose)
+                .containsExactlyInAnyOrder(StatuePose.SWIMMING, StatuePose.STANDING);
+    }
+
+    @Test
+    @DisplayName("an item held exactly as it was given round-trips with every byte")
+    void anExactItemRoundTrips() {
+        MannequinStore store = new MannequinStore(folder);
+        store.save(Mannequin.freshlyPlaced("MQ1", UUID.randomUUID(), "world", 0, 64, 0)
+                .withSlot(org.bukkit.inventory.EquipmentSlot.HAND,
+                        ItemSpec.exactly(org.bukkit.Material.FISHING_ROD, "AAECAw==")));
+
+        ItemSpec held = store.loadAll().getFirst().specFor(org.bukkit.inventory.EquipmentSlot.HAND);
+        assertThat(held.material()).isEqualTo(org.bukkit.Material.FISHING_ROD);
+        assertThat(held.exact()).isEqualTo("AAECAw==");
     }
 }

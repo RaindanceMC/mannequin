@@ -130,7 +130,8 @@
              1.10.0: Paper 26.3 natively (paper-api 26.3, api-version 26.3); no longer loads on 26.2. -->
         <!-- 1.11.0: mannequins are documents in Core's database (per server) instead of files; 1.x files are brought in on first read (RainsCore 2.0). -->
         <!-- 1.13.0: /mannequin statue <player> — never hurt, wearing that player's current skin and SMP-styled name. -->
-        <plugin.version>1.13.0</plugin.version>
+        <!-- 1.14.0: statue pose/hold/remove; a fishing rod a statue holds is drawn cast (own item model in the server pack). -->
+        <plugin.version>1.14.0</plugin.version>
     </properties>
 
     <dependencies>

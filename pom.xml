@@ -22,7 +22,7 @@
     <properties>
         <rainscore.version>2.4.0</rainscore.version>
         <modules-wrapper.version>1.9.0</modules-wrapper.version>
-        <mannequin-module.version>1.13.0</mannequin-module.version>
+        <mannequin-module.version>1.14.0</mannequin-module.version>
     </properties>
 
     <modules>

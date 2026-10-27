@@ -66,7 +66,7 @@ class MannequinTest {
     @Test
     void aNullKindPassedDirectlyDefaultsToPlayer() {
         Mannequin built = new Mannequin("MQ3", UUID.randomUUID(), "world", 0, 64, 0, "Dummy",
-                Map.of(), null, true, false, null, null, 0f, Set.of(), null, null);
+                Map.of(), null, true, false, null, null, 0f, Set.of(), null, null, null);
 
         assertThat(built.kind()).isEqualTo(MannequinKind.PLAYER);
     }
@@ -165,7 +165,7 @@ class MannequinTest {
     void ownerNeverEndsUpInTrustedSet() {
         UUID owner = UUID.randomUUID();
         Mannequin built = new Mannequin("MQ5", owner, "world", 0, 64, 0, "Dummy",
-                Map.of(), null, true, false, null, null, 0f, Set.of(owner), null, null);
+                Map.of(), null, true, false, null, null, 0f, Set.of(owner), null, null, null);
 
         assertThat(built.trusted()).isEmpty();
     }
@@ -219,5 +219,22 @@ class MannequinTest {
                 .withClaimId(UUID.randomUUID()).withMaxHealthOverride(40.0);
 
         assertThat(statue.statueOf()).isEqualTo(depicted);
+    }
+
+    @Test
+    void aMannequinStandsUntilToldOtherwise() {
+        assertThat(base.pose()).isEqualTo(StatuePose.STANDING);
+        assertThat(base.withPose(StatuePose.SLEEPING).withYaw(5f).withDisplayName("x").pose())
+                .isEqualTo(StatuePose.SLEEPING);
+        assertThat(base.withPose(null).pose()).isEqualTo(StatuePose.STANDING);
+    }
+
+    @Test
+    void anExactItemIsKeptAsItWasGiven() {
+        ItemSpec held = ItemSpec.exactly(org.bukkit.Material.FISHING_ROD, "AAEC");
+
+        assertThat(held.exact()).isEqualTo("AAEC");
+        assertThat(held.material()).isEqualTo(org.bukkit.Material.FISHING_ROD);
+        assertThat(ItemSpec.of(org.bukkit.Material.STICK).exact()).isNull();
     }
 }

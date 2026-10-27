@@ -24,7 +24,11 @@ import java.util.Map;
  * anybody can loot back out, so the usual "would this be obtainable in survival" guard does not
  * apply. {@link #toItemStack()} therefore always uses {@link ItemStack#addUnsafeEnchantment}.
  */
-public record ItemSpec(Material material, Map<Enchantment, Integer> enchants) {
+public record ItemSpec(Material material, Map<Enchantment, Integer> enchants, String exact) {
+
+    public ItemSpec(Material material, Map<Enchantment, Integer> enchants) {
+        this(material, enchants, null);
+    }
 
     public ItemSpec {
         if (material == null) {
@@ -37,6 +41,19 @@ public record ItemSpec(Material material, Map<Enchantment, Integer> enchants) {
         return new ItemSpec(material, Map.of());
     }
 
+    /**
+     * A whole item exactly as somebody held it — name, custom model, banner pattern and all — as
+     * {@code ItemStack#serializeAsBytes}, base64. What a statue holds; the loadout screen's
+     * material-and-enchants choice could not carry any of that.
+     */
+    public static ItemSpec exactly(Material material, String base64) {
+        return new ItemSpec(material, Map.of(), base64);
+    }
+
+    public static ItemSpec exactly(ItemStack stack) {
+        return exactly(stack.getType(), java.util.Base64.getEncoder().encodeToString(stack.serializeAsBytes()));
+    }
+
     /** The same material, with one more (or replaced) enchant level. */
     public ItemSpec withEnchant(Enchantment enchant, int level) {
         Map<Enchantment, Integer> next = new LinkedHashMap<>(enchants);
@@ -45,7 +62,7 @@ public record ItemSpec(Material material, Map<Enchantment, Integer> enchants) {
         } else {
             next.put(enchant, level);
         }
-        return new ItemSpec(material, next);
+        return new ItemSpec(material, next, exact);
     }
 
     /**
@@ -56,6 +73,9 @@ public record ItemSpec(Material material, Map<Enchantment, Integer> enchants) {
      * factory, which is what keeps this method callable from a plain unit test as well as a live one.
      */
     public ItemStack toItemStack() {
+        if (exact != null) {
+            return ItemStack.deserializeBytes(java.util.Base64.getDecoder().decode(exact));
+        }
         ItemStack stack = new ItemStack(material);
         for (Map.Entry<Enchantment, Integer> entry : enchants.entrySet()) {
             stack.addUnsafeEnchantment(entry.getKey(), entry.getValue());

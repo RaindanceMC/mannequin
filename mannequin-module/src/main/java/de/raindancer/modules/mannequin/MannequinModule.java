@@ -30,6 +30,7 @@ import de.raindancer.modules.mannequin.service.MannequinRedstoneService;
 import de.raindancer.modules.mannequin.service.MannequinPurchase;
 import de.raindancer.modules.mannequin.service.MannequinService;
 import de.raindancer.modules.mannequin.service.StatueService;
+import de.raindancer.modules.mannequin.util.MannequinPack;
 import de.raindancer.modules.mannequin.store.MannequinRegistry;
 import de.raindancer.modules.mannequin.store.MannequinStore;
 import de.raindancer.modules.mannequin.util.PermissionNodes;
@@ -50,7 +51,7 @@ import java.util.List;
  */
 public final class MannequinModule implements FlexModule {
 
-    private static final ModuleInfo INFO = ModuleInfo.of("mannequin", "Mannequin", "1.13.0")
+    private static final ModuleInfo INFO = ModuleInfo.of("mannequin", "Mannequin", "1.14.0")
             .describedAs("Training dummies an owner spawns and dresses: real health that can be "
                     + "brought down and respawns identically afterwards, every hit tracked, "
                     + "blocking with a shield, and never leaving anything obtainable behind.")
@@ -151,6 +152,8 @@ public final class MannequinModule implements FlexModule {
         context.listener(new MannequinKnockbackListener(mannequins));
         context.listener(new MannequinTargetListener(mannequins));
         context.listener(new MannequinStatueListener(registry, statues));
+        MannequinPack.contribute(context.plugin(), context.core());
+        context.closeWith(() -> MannequinPack.withdraw(context.core()));
 
         // A real link if a claims plugin happens to be running, ClaimLink.NONE otherwise — see
         // ClaimIntegration for why this is safe to call unconditionally even when claims-module's

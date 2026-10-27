@@ -7,6 +7,7 @@ import de.raindancer.core.data.store.YamlStore;
 import de.raindancer.core.platform.log.Log;
 import de.raindancer.core.platform.log.LogChannel;
 import de.raindancer.modules.mannequin.model.ItemSpec;
+import de.raindancer.modules.mannequin.model.StatuePose;
 import de.raindancer.modules.mannequin.model.Mannequin;
 import de.raindancer.modules.mannequin.model.MannequinKind;
 import org.bukkit.Material;
@@ -79,6 +80,7 @@ public final class MannequinStore {
             yaml.set("trusted", mannequin.trusted().stream().map(UUID::toString).toList());
             yaml.set("claim-id", mannequin.claimId() == null ? null : mannequin.claimId().toString());
             yaml.set("statue-of", mannequin.statueOf() == null ? null : mannequin.statueOf().toString());
+            yaml.set("pose", mannequin.pose() == StatuePose.STANDING ? null : mannequin.pose().typed());
             for (Map.Entry<EquipmentSlot, ItemSpec> entry : mannequin.loadout().entrySet()) {
                 String at = "loadout." + entry.getKey().name();
                 yaml.set(at + ".material", entry.getValue().material().name());
@@ -87,6 +89,7 @@ public final class MannequinStore {
                     enchants.add(enchant.getKey().getKey().asString() + ":" + enchant.getValue());
                 }
                 yaml.set(at + ".enchants", enchants);
+                yaml.set(at + ".exact", entry.getValue().exact());
             }
         });
     }
@@ -197,6 +200,11 @@ public final class MannequinStore {
                 if (material == null) {
                     continue;
                 }
+                String exact = entry.getString("exact");
+                if (exact != null && !exact.isBlank()) {
+                    loadout.put(slot, ItemSpec.exactly(material, exact));
+                    continue;
+                }
                 Map<Enchantment, Integer> enchants = new LinkedHashMap<>();
                 for (String encoded : entry.getStringList("enchants")) {
                     int colon = encoded.lastIndexOf(':');
@@ -219,7 +227,7 @@ public final class MannequinStore {
         }
 
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, StatuePose.byName(yaml.getString("pose")).orElse(StatuePose.STANDING));
     }
 
     private static String required(String value, String what) {

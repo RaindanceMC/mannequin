@@ -8,7 +8,7 @@ category: Games
 order: 30
 module: mannequin
 aliases: [mannequin, dummy, dummies, training, training-dummy, target, pvp-practice]
-keywords: [statue, create, remove, kind, zombie, skeleton, wither, iron golem, player, share, trust, claim, health, respawn, price, refund]
+keywords: [statue, pose, hold, fishing rod, create, remove, kind, zombie, skeleton, wither, iron golem, player, share, trust, claim, health, respawn, price, refund]
 commands: [mannequin]
 related: [mannequin-training]
 sections:
@@ -37,7 +37,11 @@ sections:
   - question: How do I put up a statue of a player?
     title: Statues
     text: |
-      {cmd:/mannequin statue <player>} places one where you stand, facing your way — anybody this server knows, or any Minecraft name. Nothing can hurt it, not even a player in creative. It wears that player's skin and their name exactly as it shows above their head, colour, gradient and rank included, and keeps both up to date: a restyle shows at once, a new skin the next time they join. You can dress it; skin, stats, health and redstone are not for statues. Needs <white>rainsmannequins.mannequin.statue</white>; {cmd:/mannequin remove <id>} takes it down.
+      {cmd:/mannequin statue <player>} places one where you stand, facing your way — anybody this server knows, or any Minecraft name. Nothing can hurt it, not even a player in creative. It wears that player's skin and their name exactly as it shows above their head, colour, gradient and rank included, and keeps both up to date: a restyle shows at once, a new skin the next time they join. You can dress it; skin, stats, health and redstone are not for statues. Needs <white>rainsmannequins.mannequin.statue</white>.
+  - question: How do I pose or dress a statue?
+    title: Posing statues
+    text: |
+      Look at the statue (or stand right next to it) and type {cmd:/mannequin statue pose <pose>} — standing, sneaking, swimming, gliding or sleeping. {cmd:/mannequin statue hold} gives it exactly what is in your hands, name and look included; an empty hand empties its hand. A fishing rod in a statue's hand is always drawn cast. {cmd:/mannequin statue remove} takes it away at once. Each also takes a statue's id at the end, from anywhere.
   - question: Can others use my mannequin?
     title: Sharing
     text: |

@@ -296,7 +296,8 @@ public final class MannequinService implements IMannequinService {
         }
         if (mannequin.kind().supportsLoadout()) {
             for (Map.Entry<EquipmentSlot, ItemSpec> entry : mannequin.loadout().entrySet()) {
-                equip.apply(entity, entry.getKey(), entry.getValue().toItemStack());
+                org.bukkit.inventory.ItemStack stack = entry.getValue().toItemStack();
+                equip.apply(entity, entry.getKey(), mannequin.isStatue() ? de.raindancer.modules.mannequin.util.MannequinPack.castIfRod(stack) : stack);
             }
         }
         if (mannequin.kind().burnsInDaylight()) {
@@ -326,6 +327,10 @@ public final class MannequinService implements IMannequinService {
         configureCommon(entity, mannequin);
         entity.setImmovable(true);
         entity.setSkinParts(com.destroystokyo.paper.SkinParts.allParts());
+        if (mannequin.pose() != de.raindancer.modules.mannequin.model.StatuePose.STANDING) {
+            // fixed: vanilla would otherwise stand it straight back up on the next tick
+            entity.setPose(mannequin.pose().bukkit(), true);
+        }
     }
 
     /** {@link MannequinKind#ZOMBIE}, {@link MannequinKind#SKELETON} and {@link MannequinKind#IRON_GOLEM}. */
