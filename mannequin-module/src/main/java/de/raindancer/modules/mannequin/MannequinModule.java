@@ -11,6 +11,7 @@ import de.raindancer.modules.mannequin.listener.MannequinCombatListener;
 import de.raindancer.modules.mannequin.listener.MannequinDeathListener;
 import de.raindancer.modules.mannequin.listener.MannequinKnockbackListener;
 import de.raindancer.modules.mannequin.listener.MannequinPickupListener;
+import de.raindancer.modules.mannequin.listener.MannequinStatueListener;
 import de.raindancer.modules.mannequin.listener.MannequinTargetListener;
 import de.raindancer.modules.mannequin.listener.MannequinWorldListener;
 import de.raindancer.modules.mannequin.model.Mannequin;
@@ -28,6 +29,7 @@ import de.raindancer.modules.mannequin.service.MannequinPotionService;
 import de.raindancer.modules.mannequin.service.MannequinRedstoneService;
 import de.raindancer.modules.mannequin.service.MannequinPurchase;
 import de.raindancer.modules.mannequin.service.MannequinService;
+import de.raindancer.modules.mannequin.service.StatueService;
 import de.raindancer.modules.mannequin.store.MannequinRegistry;
 import de.raindancer.modules.mannequin.store.MannequinStore;
 import de.raindancer.modules.mannequin.util.PermissionNodes;
@@ -48,7 +50,7 @@ import java.util.List;
  */
 public final class MannequinModule implements FlexModule {
 
-    private static final ModuleInfo INFO = ModuleInfo.of("mannequin", "Mannequin", "1.12.0")
+    private static final ModuleInfo INFO = ModuleInfo.of("mannequin", "Mannequin", "1.13.0")
             .describedAs("Training dummies an owner spawns and dresses: real health that can be "
                     + "brought down and respawns identically afterwards, every hit tracked, "
                     + "blocking with a shield, and never leaving anything obtainable behind.")
@@ -67,11 +69,15 @@ public final class MannequinModule implements FlexModule {
      */
     private static final double CONSUMABLE_RANGE = 1.5;
 
+    /** As often as Core redraws an animated nametag, so a statue's gradient flows the same. */
+    private static final long STATUE_NAME_TICKS = 2L;
+
     private LogChannel log;
     private SettingsStore<MannequinSettings> settings;
     private MannequinRegistry registry;
     private MannequinService mannequins;
     private MannequinPotionService potions;
+    private StatueService statues;
     private MannequinServices services;
     private final ShieldBlockRule shieldBlockRule = new ShieldBlockRule();
 
@@ -124,6 +130,14 @@ public final class MannequinModule implements FlexModule {
         settings.onChange(combat::settings);
         settings.onChange(mannequins::settings);
 
+        var identities = context.core().identities();
+        statues = new StatueService(registry, mannequins::liveEntity, mannequins::save,
+                (entity, player) -> entity.setProfile(
+                        io.papermc.paper.datacomponent.item.ResolvableProfile.resolvableProfile(player.getPlayerProfile())),
+                identities::nametag, identities::subtitle,
+                (entity, task) -> Scheduling.entity(context.plugin(), entity, task));
+        mannequins.statues(statues);
+
         // Every world already loaded by the time this module starts gets its mannequins spawned now;
         // worlds that load later are handled by MannequinWorldListener.
         for (org.bukkit.World world : server.getWorlds()) {
@@ -136,6 +150,7 @@ public final class MannequinModule implements FlexModule {
         context.listener(new MannequinWorldListener(mannequins));
         context.listener(new MannequinKnockbackListener(mannequins));
         context.listener(new MannequinTargetListener(mannequins));
+        context.listener(new MannequinStatueListener(registry, statues));
 
         // A real link if a claims plugin happens to be running, ClaimLink.NONE otherwise — see
         // ClaimIntegration for why this is safe to call unconditionally even when claims-module's
@@ -162,6 +177,11 @@ public final class MannequinModule implements FlexModule {
         if (upkeepTimer != null) {
             context.closeWith(upkeepTimer::cancel);
         }
+        var statueNameTimer = Scheduling.globalTimer(context.plugin(), STATUE_NAME_TICKS, STATUE_NAME_TICKS,
+                task -> statues.refreshNames());
+        if (statueNameTimer != null) {
+            context.closeWith(statueNameTimer::cancel);
+        }
 
         log.info("Mannequins are up: {} loaded, combo window {}ms, one-shot threshold {}.",
                 registry.size(), settings.current().comboWindow(), settings.current().oneShotThresholdDamage());
@@ -175,6 +195,9 @@ public final class MannequinModule implements FlexModule {
     private void periodicUpkeep() {
         MannequinSettings current = settings.current();
         for (Mannequin mannequin : registry.all()) {
+            if (mannequin.isStatue()) {
+                continue;
+            }
             mannequins.liveEntity(mannequin.id())
                     .ifPresent(entity -> {
                         if (current.blockingEnabled() && mannequin.blocksWithShield()) {

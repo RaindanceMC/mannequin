@@ -60,12 +60,15 @@ import java.util.UUID;
  *                             Never resolved to a live {@code Claim} in this class: the model does
  *                             not reach for a claims plugin that might not be installed, so this is
  *                             nothing more than an id somebody else knows what to do with.
+ * @param statueOf             the player this is a statue of, or {@code null} for a training dummy.
+ *                             A statue is never hurt and always wears that player's current skin
+ *                             and styled name — see {@code service.StatueService}.
  */
 public record Mannequin(String id, UUID owner, String world, int x, int y, int z,
                         String displayName, Map<EquipmentSlot, ItemSpec> loadout,
                         UUID skinSource, boolean blocksWithShield, boolean emitsRedstoneSignal,
                         Double maxHealthOverride, MannequinKind kind, float yaw, Set<UUID> trusted,
-                        UUID claimId) {
+                        UUID claimId, UUID statueOf) {
 
     public Mannequin {
         if (id == null || id.isBlank()) {
@@ -106,7 +109,21 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
     public static Mannequin freshlyPlaced(String id, UUID owner, String world, int x, int y, int z,
                                           MannequinKind kind, float yaw) {
         return new Mannequin(id, owner, world, x, y, z, "Mannequin", Map.of(), null, true, false,
-                null, kind, yaw, Set.of(), null);
+                null, kind, yaw, Set.of(), null, null);
+    }
+
+    /**
+     * A statue of {@code depicted}: their skin and name, no shield raised, and — once spawned —
+     * nothing that can hurt it. {@code name} is only the fallback until they next join.
+     */
+    public static Mannequin statue(String id, UUID owner, UUID depicted, String name,
+                                   String world, int x, int y, int z, float yaw) {
+        return new Mannequin(id, owner, world, x, y, z, name, Map.of(), depicted, false, false,
+                null, MannequinKind.PLAYER, yaw, Set.of(), null, depicted);
+    }
+
+    public boolean isStatue() {
+        return statueOf != null;
     }
 
     /** The barrel this mannequin's redstone pulse is written to — directly under its feet. */
@@ -129,7 +146,7 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
 
     public Mannequin withDisplayName(String name) {
         return new Mannequin(id, owner, world, x, y, z, name, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf);
     }
 
     public Mannequin withSlot(EquipmentSlot slot, ItemSpec spec) {
@@ -140,40 +157,40 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
             next.put(slot, spec);
         }
         return new Mannequin(id, owner, world, x, y, z, displayName, next, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf);
     }
 
     public Mannequin withSkinSource(UUID skin) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skin,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf);
     }
 
     public Mannequin withBlocksWithShield(boolean blocks) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocks, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId);
+                blocks, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf);
     }
 
     public Mannequin withEmitsRedstoneSignal(boolean emits) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emits, maxHealthOverride, kind, yaw, trusted, claimId);
+                blocksWithShield, emits, maxHealthOverride, kind, yaw, trusted, claimId, statueOf);
     }
 
     /** @param health {@code null} to fall back to the server-wide default again */
     public Mannequin withMaxHealthOverride(Double health) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, health, kind, yaw, trusted, claimId);
+                blocksWithShield, emitsRedstoneSignal, health, kind, yaw, trusted, claimId, statueOf);
     }
 
     /** Which mob this is spawned as — see {@link MannequinKind}. */
     public Mannequin withKind(MannequinKind newKind) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, newKind, yaw, trusted, claimId);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, newKind, yaw, trusted, claimId, statueOf);
     }
 
     /** Which way it faces, in degrees. */
     public Mannequin withYaw(float newYaw) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, newYaw, trusted, claimId);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, newYaw, trusted, claimId, statueOf);
     }
 
     /** Trusts one more person with this mannequin — a no-op if they already own it or are trusted. */
@@ -184,7 +201,7 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
         Set<UUID> next = new LinkedHashSet<>(trusted);
         next.add(player);
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, next, claimId);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, next, claimId, statueOf);
     }
 
     /** Withdraws trust from somebody — a no-op if they were never trusted. */
@@ -195,7 +212,7 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
         Set<UUID> next = new LinkedHashSet<>(trusted);
         next.remove(player);
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, next, claimId);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, next, claimId, statueOf);
     }
 
     /** Whether this player owns the mannequin or has been trusted with it. */
@@ -212,7 +229,7 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
      */
     public Mannequin withClaimId(UUID newClaimId) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, newClaimId);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, newClaimId, statueOf);
     }
 
     public ItemSpec specFor(EquipmentSlot slot) {

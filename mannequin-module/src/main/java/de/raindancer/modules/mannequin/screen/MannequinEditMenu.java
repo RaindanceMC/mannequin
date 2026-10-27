@@ -101,7 +101,11 @@ public final class MannequinEditMenu extends Menu implements IMannequinScreen {
                     click -> new LoadoutScreen(services, viewer, mannequin, this).open());
         }
 
-        if (mannequin.kind().supportsSkin()) {
+        // A statue wears its player's own skin and name and is never hurt, so the training doors
+        // and the skin, name, shield and redstone switches would all be buttons for nothing.
+        boolean training = !mannequin.isStatue();
+
+        if (training && mannequin.kind().supportsSkin()) {
             band(MenuLayout.WHO, 3, Icons.of(Material.PLAYER_HEAD, "<white>Skin",
                             "<gray>Whose face this mannequin wears.",
                             "",
@@ -109,32 +113,34 @@ public final class MannequinEditMenu extends Menu implements IMannequinScreen {
                     click -> new SkinScreen(services, viewer, mannequin, this).open());
         }
 
-        band(MenuLayout.WHO, 5, Icons.of(Material.PAPER, "<white>Stats",
-                        "<gray>Damage, hits and combo history.",
-                        "",
-                        "<gray>Click to open."),
-                click -> new StatsScreen(services, viewer, mannequin, this).open());
+        if (training) {
+            band(MenuLayout.WHO, 5, Icons.of(Material.PAPER, "<white>Stats",
+                            "<gray>Damage, hits and combo history.",
+                            "",
+                            "<gray>Click to open."),
+                    click -> new StatsScreen(services, viewer, mannequin, this).open());
 
-        band(MenuLayout.WHO, 7, Icons.of(Material.GOLDEN_APPLE, "<white>Health",
-                        "<gray>Currently <white>"
-                                + String.format(Locale.ROOT, "%.0f",
-                                        mannequin.resolvedMaxHealth(services.config().maxHealthClamped()))
-                                + "<gray> max HP.",
-                        "",
-                        "<gray>Click to open."),
-                click -> new HealthScreen(services, viewer, mannequin, this).open());
+            band(MenuLayout.WHO, 7, Icons.of(Material.GOLDEN_APPLE, "<white>Health",
+                            "<gray>Currently <white>"
+                                    + String.format(Locale.ROOT, "%.0f",
+                                            mannequin.resolvedMaxHealth(services.config().maxHealthClamped()))
+                                    + "<gray> max HP.",
+                            "",
+                            "<gray>Click to open."),
+                    click -> new HealthScreen(services, viewer, mannequin, this).open());
 
-        band(MenuLayout.RULES, 5, Icons.of(Material.NAME_TAG, "<white>Rename",
-                        "<gray>Called <white>" + mannequin.displayName() + "<gray> now.",
-                        "",
-                        "<gray>Click to type a new name."),
-                click -> askForANewName(mannequin));
+            band(MenuLayout.RULES, 5, Icons.of(Material.NAME_TAG, "<white>Rename",
+                            "<gray>Called <white>" + mannequin.displayName() + "<gray> now.",
+                            "",
+                            "<gray>Click to type a new name."),
+                    click -> askForANewName(mannequin));
 
-        band(MenuLayout.RULES, 1, shieldIcon(mannequin), click -> {
-            Mannequin updated = mannequin.withBlocksWithShield(!mannequin.blocksWithShield());
-            services.mannequins().save(updated);
-            refresh();
-        });
+            band(MenuLayout.RULES, 1, shieldIcon(mannequin), click -> {
+                Mannequin updated = mannequin.withBlocksWithShield(!mannequin.blocksWithShield());
+                services.mannequins().save(updated);
+                refresh();
+            });
+        }
 
         band(MenuLayout.RULES, 7, mannequin.owner().equals(viewer.getUniqueId()),
                 Icons.head(viewer.getUniqueId(), "<aqua>Shared with",
@@ -143,21 +149,23 @@ public final class MannequinEditMenu extends Menu implements IMannequinScreen {
                 "The owner's to change",
                 click -> new ShareMenu(services, viewer, mannequin, this).open());
 
-        band(MenuLayout.RULES, 3, redstoneIcon(mannequin), click -> {
-            boolean nowOn = !mannequin.emitsRedstoneSignal();
-            Mannequin updated = mannequin.withEmitsRedstoneSignal(nowOn);
-            services.mannequins().save(updated);
-            services.mannequins().ensureBarrel(updated);
-            if (nowOn) {
-                // The barrel is easy to build a comparator against wrong: it sits one full block
-                // under where the mannequin stands, not beside its feet at the surface — a
-                // comparator one level too high reads nothing at all. Told in exact coordinates
-                // because "underneath it" is not specific enough to get right on the first try.
-                services.messages().send(viewer, "mannequin.redstone.barrel-at",
-                        "x", updated.x(), "y", updated.barrelY(), "z", updated.z());
-            }
-            refresh();
-        });
+        if (training) {
+            band(MenuLayout.RULES, 3, redstoneIcon(mannequin), click -> {
+                boolean nowOn = !mannequin.emitsRedstoneSignal();
+                Mannequin updated = mannequin.withEmitsRedstoneSignal(nowOn);
+                services.mannequins().save(updated);
+                services.mannequins().ensureBarrel(updated);
+                if (nowOn) {
+                    // The barrel is easy to build a comparator against wrong: it sits one full block
+                    // under where the mannequin stands, not beside its feet at the surface — a
+                    // comparator one level too high reads nothing at all. Told in exact coordinates
+                    // because "underneath it" is not specific enough to get right on the first try.
+                    services.messages().send(viewer, "mannequin.redstone.barrel-at",
+                            "x", updated.x(), "y", updated.barrelY(), "z", updated.z());
+                }
+                refresh();
+            });
+        }
 
         // Only drawn when this module actually knows about claims — a bare button offering to link a
         // claim on a server with no claims plugin at all would be a door to nowhere, and this is the

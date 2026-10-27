@@ -78,6 +78,7 @@ public final class MannequinStore {
             yaml.set("yaw", (double) mannequin.yaw());
             yaml.set("trusted", mannequin.trusted().stream().map(UUID::toString).toList());
             yaml.set("claim-id", mannequin.claimId() == null ? null : mannequin.claimId().toString());
+            yaml.set("statue-of", mannequin.statueOf() == null ? null : mannequin.statueOf().toString());
             for (Map.Entry<EquipmentSlot, ItemSpec> entry : mannequin.loadout().entrySet()) {
                 String at = "loadout." + entry.getKey().name();
                 yaml.set(at + ".material", entry.getValue().material().name());
@@ -169,6 +170,16 @@ public final class MannequinStore {
         }
 
         Map<EquipmentSlot, ItemSpec> loadout = new LinkedHashMap<>();
+        UUID statueOf = null;
+        String statueRaw = yaml.getString("statue-of");
+        if (statueRaw != null && !statueRaw.isBlank()) {
+            try {
+                statueOf = UUID.fromString(statueRaw);
+            } catch (IllegalArgumentException garbled) {
+                // Read as a training dummy rather than not at all.
+            }
+        }
+
         ConfigurationSection loadoutSection = yaml.getConfigurationSection("loadout");
         if (loadoutSection != null) {
             for (String slotName : loadoutSection.getKeys(false)) {
@@ -208,7 +219,7 @@ public final class MannequinStore {
         }
 
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf);
     }
 
     private static String required(String value, String what) {

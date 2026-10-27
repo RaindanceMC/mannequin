@@ -66,7 +66,7 @@ class MannequinTest {
     @Test
     void aNullKindPassedDirectlyDefaultsToPlayer() {
         Mannequin built = new Mannequin("MQ3", UUID.randomUUID(), "world", 0, 64, 0, "Dummy",
-                Map.of(), null, true, false, null, null, 0f, Set.of(), null);
+                Map.of(), null, true, false, null, null, 0f, Set.of(), null, null);
 
         assertThat(built.kind()).isEqualTo(MannequinKind.PLAYER);
     }
@@ -165,7 +165,7 @@ class MannequinTest {
     void ownerNeverEndsUpInTrustedSet() {
         UUID owner = UUID.randomUUID();
         Mannequin built = new Mannequin("MQ5", owner, "world", 0, 64, 0, "Dummy",
-                Map.of(), null, true, false, null, null, 0f, Set.of(owner), null);
+                Map.of(), null, true, false, null, null, 0f, Set.of(owner), null, null);
 
         assertThat(built.trusted()).isEmpty();
     }
@@ -188,5 +188,36 @@ class MannequinTest {
     void withClaimIdNullUnlinksIt() {
         Mannequin linked = base.withClaimId(UUID.randomUUID());
         assertThat(linked.withClaimId(null).claimId()).isNull();
+    }
+
+    @Test
+    void aStatueStandsForThePlayerItShows() {
+        UUID depicted = UUID.randomUUID();
+        Mannequin statue = Mannequin.statue("MQ7", UUID.randomUUID(), depicted, "Raindancer118",
+                "world", 1, 64, 2, 90f);
+
+        assertThat(statue.isStatue()).isTrue();
+        assertThat(statue.statueOf()).isEqualTo(depicted);
+        assertThat(statue.skinSource()).isEqualTo(depicted);
+        assertThat(statue.displayName()).isEqualTo("Raindancer118");
+        assertThat(statue.kind()).isEqualTo(MannequinKind.PLAYER);
+        assertThat(statue.blocksWithShield()).isFalse();
+        assertThat(statue.yaw()).isEqualTo(90f);
+    }
+
+    @Test
+    void aTrainingDummyIsNoStatue() {
+        assertThat(base.isStatue()).isFalse();
+        assertThat(base.statueOf()).isNull();
+    }
+
+    @Test
+    void stayingAStatueThroughEveryChange() {
+        UUID depicted = UUID.randomUUID();
+        Mannequin statue = Mannequin.statue("MQ7", UUID.randomUUID(), depicted, "Rain", "world", 0, 64, 0, 0f)
+                .withDisplayName("Renamed").withYaw(10f).withTrusted(UUID.randomUUID())
+                .withClaimId(UUID.randomUUID()).withMaxHealthOverride(40.0);
+
+        assertThat(statue.statueOf()).isEqualTo(depicted);
     }
 }

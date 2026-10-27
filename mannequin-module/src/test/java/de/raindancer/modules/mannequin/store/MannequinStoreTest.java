@@ -209,4 +209,23 @@ class MannequinStoreTest {
 
         assertThat(loaded).extracting(Mannequin::id).containsExactly("MQ2");
     }
+
+    @Test
+    @DisplayName("whom a statue shows round-trips exactly")
+    void statueRoundTrips() {
+        MannequinStore store = new MannequinStore(folder);
+        UUID depicted = UUID.randomUUID();
+        store.save(Mannequin.statue("MQ1", UUID.randomUUID(), depicted, "Rain", "world", 0, 64, 0, 0f));
+
+        assertThat(store.loadAll().getFirst().statueOf()).isEqualTo(depicted);
+    }
+
+    @Test
+    @DisplayName("a training dummy round-trips as no statue")
+    void noStatueStaysNull() {
+        MannequinStore store = new MannequinStore(folder);
+        store.save(Mannequin.freshlyPlaced("MQ1", UUID.randomUUID(), "world", 0, 64, 0));
+
+        assertThat(store.loadAll().getFirst().statueOf()).isNull();
+    }
 }

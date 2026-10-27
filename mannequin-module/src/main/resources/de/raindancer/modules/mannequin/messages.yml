@@ -5,7 +5,7 @@
 # here is YAML's idea of a truth value — see rtp-module's messages.yml for why both of those matter.
 mannequin:
 
-  usage: "<gray>/mannequin create|remove|loadout|skin|stats|list"
+  usage: "<gray>/mannequin create|statue|remove|loadout|skin|stats|list"
   only-a-player: "<red>Only a player standing in the world can do that."
   missing-id: "<red>Which one? /mannequin <remove|loadout|skin|stats> <id>."
   unknown-id: "<red>There is no mannequin called <white><id></white>."
@@ -31,6 +31,14 @@ mannequin:
     no-permission: "<red>You may not create a mannequin here."
     done: "<green>Created mannequin <white><id></white>. It stands very still."
     unknown-kind: "<red>There is no mannequin kind called <white><kind></white>. Try player, zombie, skeleton, wither or iron_golem."
+
+  statue:
+    usage: "<red>Whose statue? /mannequin statue <player>."
+    no-permission: "<red>You may not place statues."
+    looking-up: "<gray>Looking up <white><name></white>…"
+    not-found: "<red>Nobody called <white><name></white> could be found. Check the spelling."
+    done: "<green>A statue of <white><name></white> stands here now (<white><id></white>). Nothing can hurt it."
+    not-for-statues: "<red>A statue wears its player's own skin and keeps no training stats."
 
   price:
     paid: "<gray>That cost <white><price></white>."

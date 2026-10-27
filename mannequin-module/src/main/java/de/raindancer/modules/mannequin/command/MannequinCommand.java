@@ -8,6 +8,8 @@ import de.raindancer.modules.mannequin.model.MannequinKind;
 import de.raindancer.modules.mannequin.rules.CreateMannequinRule;
 import de.raindancer.modules.mannequin.util.PermissionNodes;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import de.raindancer.core.platform.util.Scheduling;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -16,10 +18,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * {@code /mannequin create|remove|loadout|skin|stats|list} — everything typing is faster for than
+ * {@code /mannequin create|statue|remove|loadout|skin|stats|list} — everything typing is faster for than
  * clicking through a menu, or that takes an argument a menu cannot ask for (an id).
  *
  * <h2>{@code remove} confirms the same way {@code farmworld-module}'s {@code delete} does</h2>
@@ -32,7 +35,7 @@ import java.util.function.Supplier;
 public final class MannequinCommand implements IMannequinCommand {
 
     private static final List<String> SUBCOMMANDS =
-            List.of("create", "remove", "loadout", "skin", "stats", "list");
+            List.of("create", "statue", "remove", "loadout", "skin", "stats", "list");
 
     private final Supplier<MannequinServices> services;
     private final CreateMannequinRule createRule = new CreateMannequinRule();
@@ -59,12 +62,13 @@ public final class MannequinCommand implements IMannequinCommand {
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "create" -> create(live, sender, args);
+            case "statue" -> statue(live, sender, args);
             // remove has its own, wider check (mayManage OR the server-wide REMOVE_ANY permission),
             // so it is looked up with withAnyMannequin rather than gated a second, narrower time.
             case "remove" -> withAnyMannequin(live, sender, args, (l, p, m) -> remove(l, p, m, args));
             case "loadout" -> withMannequin(live, sender, args, (l, p, m) -> l.screens().loadout(p, m));
-            case "skin" -> withMannequin(live, sender, args, (l, p, m) -> l.screens().skin(p, m));
-            case "stats" -> withMannequin(live, sender, args, (l, p, m) -> l.screens().stats(p, m));
+            case "skin" -> withTrainingDummy(live, sender, args, (l, p, m) -> l.screens().skin(p, m));
+            case "stats" -> withTrainingDummy(live, sender, args, (l, p, m) -> l.screens().stats(p, m));
             case "list" -> list(live, sender);
             default -> {
                 if (!MistypedCommand.subcommand(sender, "mannequin", args, 0, suggest(source, new String[]{""}))) {
@@ -107,6 +111,51 @@ public final class MannequinCommand implements IMannequinCommand {
             return;
         }
         live.messages().send(sender, "mannequin.create.done", "id", created.get().id());
+    }
+
+    /**
+     * {@code /mannequin statue <player>} — somebody this server knows, or any Minecraft name, which
+     * is then asked of Mojang. Free and outside the per-player limits: it is an admin's decoration.
+     */
+    private void statue(MannequinServices live, CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            live.messages().send(sender, "mannequin.only-a-player");
+            return;
+        }
+        if (!player.hasPermission(PermissionNodes.STATUE)) {
+            live.messages().send(sender, "mannequin.statue.no-permission");
+            return;
+        }
+        if (args.length < 2 || args[1].isBlank()) {
+            live.messages().send(sender, "mannequin.statue.usage");
+            return;
+        }
+        String typed = args[1].trim();
+        // Captured now: where they stood when they typed it, not wherever they walked during a lookup.
+        org.bukkit.Location anchor = player.getLocation();
+        org.bukkit.OfflinePlayer known = Bukkit.getPlayerExact(typed);
+        if (known == null) {
+            known = Bukkit.getOfflinePlayerIfCached(typed);
+        }
+        if (known != null && known.getName() != null) {
+            placeStatue(live, player, known.getUniqueId(), known.getName(), anchor);
+            return;
+        }
+        live.messages().send(sender, "mannequin.statue.looking-up", "name", typed);
+        Bukkit.createProfile(typed).update().whenCompleteAsync((found, error) ->
+                Scheduling.entity(live.plugin(), player, () -> {
+                    if (error != null || found == null || found.getId() == null || found.getName() == null) {
+                        live.messages().send(player, "mannequin.statue.not-found", "name", typed);
+                        return;
+                    }
+                    placeStatue(live, player, found.getId(), found.getName(), anchor);
+                }));
+    }
+
+    private void placeStatue(MannequinServices live, Player player, UUID depicted, String name,
+                             org.bukkit.Location anchor) {
+        Mannequin statue = live.mannequins().createStatue(player.getUniqueId(), depicted, name, anchor);
+        live.messages().send(player, "mannequin.statue.done", "name", name, "id", statue.id());
     }
 
     private void remove(MannequinServices live, Player player, Mannequin mannequin, String[] args) {
@@ -159,6 +208,18 @@ public final class MannequinCommand implements IMannequinCommand {
         });
     }
 
+    /** Skin and stats: a statue has neither a skin of its own nor a training tally. */
+    private void withTrainingDummy(MannequinServices live, CommandSender sender, String[] args,
+                                   WithMannequin action) {
+        withMannequin(live, sender, args, (l, p, m) -> {
+            if (m.isStatue()) {
+                l.messages().send(p, "mannequin.statue.not-for-statues");
+                return;
+            }
+            action.run(l, p, m);
+        });
+    }
+
     /** Looks the id up without a permission gate — {@code remove} has its own, wider one. */
     private void withAnyMannequin(MannequinServices live, CommandSender sender, String[] args,
                                   WithMannequin action) {
@@ -193,6 +254,13 @@ public final class MannequinCommand implements IMannequinCommand {
                     .filter(name -> name.startsWith(typed))
                     .toList();
         }
+        if (args.length == 2 && sub.equals("statue")) {
+            String typed = args[1].toLowerCase(Locale.ROOT);
+            return Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(typed))
+                    .toList();
+        }
         if (args.length == 2 && List.of("remove", "loadout", "skin", "stats").contains(sub)
                 && source.getSender() instanceof Player player) {
             MannequinServices live = services.get();
@@ -211,6 +279,6 @@ public final class MannequinCommand implements IMannequinCommand {
 
     @Override
     public String describe() {
-        return "create, remove, dress, skin and inspect training dummies";
+        return "create, remove, dress, skin and inspect training dummies, and place statues";
     }
 }

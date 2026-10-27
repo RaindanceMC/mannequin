@@ -8,7 +8,7 @@ category: Games
 order: 30
 module: mannequin
 aliases: [mannequin, dummy, dummies, training, training-dummy, target, pvp-practice]
-keywords: [create, remove, kind, zombie, skeleton, wither, iron golem, player, share, trust, claim, health, respawn, price, refund]
+keywords: [statue, create, remove, kind, zombie, skeleton, wither, iron golem, player, share, trust, claim, health, respawn, price, refund]
 commands: [mannequin]
 related: [mannequin-training]
 sections:
@@ -34,6 +34,10 @@ sections:
     title: Death and respawn
     text: |
       Nothing drops. {if:mannequin:respawn-delay-seconds > 0}After {setting:mannequin:respawn-delay-seconds|seconds} an identical one — same block, same loadout, same skin — takes its place.{else}An identical one takes its place at once.{/if} The training room never has a gap for long.
+  - question: How do I put up a statue of a player?
+    title: Statues
+    text: |
+      {cmd:/mannequin statue <player>} places one where you stand, facing your way — anybody this server knows, or any Minecraft name. Nothing can hurt it, not even a player in creative. It wears that player's skin and their name exactly as it shows above their head, colour, gradient and rank included, and keeps both up to date: a restyle shows at once, a new skin the next time they join. You can dress it; skin, stats, health and redstone are not for statues. Needs <white>rainsmannequins.mannequin.statue</white>; {cmd:/mannequin remove <id>} takes it down.
   - question: Can others use my mannequin?
     title: Sharing
     text: |

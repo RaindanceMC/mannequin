@@ -67,6 +67,7 @@ public final class MannequinService implements IMannequinService {
     private final MannequinEquipService equip;
     private final DelayedScheduler delayedScheduler;
     private volatile MannequinSettings settings;
+    private volatile StatueService statues;
 
     public MannequinService(Plugin plugin, LogChannel log, MannequinRegistry registry,
                             MannequinStore store, MannequinEquipService equip,
@@ -92,6 +93,11 @@ public final class MannequinService implements IMannequinService {
     @Override
     public void settings(MannequinSettings settings) {
         this.settings = settings;
+    }
+
+    /** Set once at enable; until then a statue spawns as a plain mannequin. */
+    public void statues(StatueService statues) {
+        this.statues = statues;
     }
 
     // ---------------------------------------------------------------------------- creating / removing
@@ -121,6 +127,22 @@ public final class MannequinService implements IMannequinService {
             throw failed;
         }
         return mannequin;
+    }
+
+    /** A statue of {@code depicted} on the block the player stands on, facing their way. */
+    public Mannequin createStatue(UUID owner, UUID depicted, String name, Location anchor) {
+        Mannequin statue = Mannequin.statue(registry.nextId(), owner, depicted, name,
+                anchor.getWorld().getName(), anchor.getBlockX(), anchor.getBlockY(), anchor.getBlockZ(),
+                anchor.getYaw());
+        registry.put(statue);
+        store.save(statue);
+        try {
+            spawn(statue);
+        } catch (RuntimeException failed) {
+            remove(statue.id());
+            throw failed;
+        }
+        return statue;
     }
 
     /** Removes it entirely: despawns the live entity, forgets it, and deletes its file. */
@@ -270,7 +292,7 @@ public final class MannequinService implements IMannequinService {
         entity.setHealth(health);
 
         if (mannequin.kind().supportsSkin() && entity instanceof org.bukkit.entity.Mannequin skinnable) {
-            applySkin(skinnable, mannequin.skinSource());
+            applySkin(skinnable, mannequin.skinSource(), mannequin.isStatue());
         }
         if (mannequin.kind().supportsLoadout()) {
             for (Map.Entry<EquipmentSlot, ItemSpec> entry : mannequin.loadout().entrySet()) {
@@ -282,6 +304,10 @@ public final class MannequinService implements IMannequinService {
         }
         if (mannequin.emitsRedstoneSignal()) {
             placeBarrel(entity.getWorld(), mannequin);
+        }
+        StatueService statueLook = statues;
+        if (mannequin.isStatue() && statueLook != null) {
+            statueLook.dress(entity, mannequin);
         }
     }
 
@@ -355,6 +381,14 @@ public final class MannequinService implements IMannequinService {
      * a better skin later if Mojang actually answers.
      */
     public void applySkin(org.bukkit.entity.Mannequin entity, UUID skinSource) {
+        applySkin(entity, skinSource, false);
+    }
+
+    /**
+     * @param fresh ask Mojang even when the cache already has a skin — a statue wants the one its
+     *              player wears today, not the one this server last saw
+     */
+    public void applySkin(org.bukkit.entity.Mannequin entity, UUID skinSource, boolean fresh) {
         if (entity == null) {
             return;
         }
@@ -373,13 +407,19 @@ public final class MannequinService implements IMannequinService {
         }
         entity.setProfile(ResolvableProfile.resolvableProfile(profile));
 
-        if (!profile.isComplete() && plugin != null) {
+        if ((fresh || !profile.isComplete()) && plugin != null) {
             // Scheduling.entity silently drops this if the entity has since been removed — a
             // mannequin that died and respawned in the meantime just does not get the upgrade,
-            // which is fine for a best-effort skin refresh.
-            profile.update().thenAcceptAsync(updated ->
+            // which is fine for a best-effort skin refresh. Fresh starts from the bare id: a
+            // profile that already has textures would be answered from the cache, not by Mojang.
+            var asked = fresh ? Bukkit.createProfile(skinSource) : profile;
+            asked.update().thenAcceptAsync(updated -> {
+                // Mojang not answering must not swap a cached skin for Steve.
+                if (updated != null && updated.hasTextures()) {
                     Scheduling.entity(plugin, entity,
-                            () -> entity.setProfile(ResolvableProfile.resolvableProfile(updated))));
+                            () -> entity.setProfile(ResolvableProfile.resolvableProfile(updated)));
+                }
+            });
         }
     }
 

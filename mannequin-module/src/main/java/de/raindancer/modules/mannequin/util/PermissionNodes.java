@@ -24,6 +24,8 @@ public final class PermissionNodes {
     /** Removing any mannequin, not only your own. */
     public static final String REMOVE_ANY = "rainsmannequins.mannequin.remove.any";
 
+    public static final String STATUE = "rainsmannequins.mannequin.statue";
+
     private PermissionNodes() {
     }
 
@@ -32,7 +34,8 @@ public final class PermissionNodes {
                 new Permission(USE, "Use /mannequin", PermissionDefault.TRUE),
                 new Permission(CREATE, "Create a training dummy", PermissionDefault.OP),
                 new Permission(REMOVE_ANY, "Remove any player's training dummy",
-                        PermissionDefault.OP));
+                        PermissionDefault.OP),
+                new Permission(STATUE, "Place an unhurtable statue of a player", PermissionDefault.OP));
     }
 
     /**
