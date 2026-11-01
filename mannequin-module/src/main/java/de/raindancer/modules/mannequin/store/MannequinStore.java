@@ -80,6 +80,8 @@ public final class MannequinStore {
             yaml.set("trusted", mannequin.trusted().stream().map(UUID::toString).toList());
             yaml.set("claim-id", mannequin.claimId() == null ? null : mannequin.claimId().toString());
             yaml.set("statue-of", mannequin.statueOf() == null ? null : mannequin.statueOf().toString());
+            yaml.set("board", mannequin.boardId());
+            yaml.set("board-place", mannequin.boardId() == null ? null : mannequin.boardPlace());
             yaml.set("pose", mannequin.pose() == StatuePose.STANDING ? null : mannequin.pose().typed());
             for (Map.Entry<EquipmentSlot, ItemSpec> entry : mannequin.loadout().entrySet()) {
                 String at = "loadout." + entry.getKey().name();
@@ -226,8 +228,13 @@ public final class MannequinStore {
             }
         }
 
+        // Missing on everything stored before board statues existed: no board, an ordinary statue or dummy.
+        String board = yaml.getString("board");
+        int boardPlace = yaml.getInt("board-place", 1);
+
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, StatuePose.byName(yaml.getString("pose")).orElse(StatuePose.STANDING));
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf,
+                StatuePose.byName(yaml.getString("pose")).orElse(StatuePose.STANDING), board, boardPlace);
     }
 
     private static String required(String value, String what) {

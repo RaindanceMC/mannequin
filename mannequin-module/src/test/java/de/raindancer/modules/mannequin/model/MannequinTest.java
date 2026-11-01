@@ -237,4 +237,58 @@ class MannequinTest {
         assertThat(held.material()).isEqualTo(org.bukkit.Material.FISHING_ROD);
         assertThat(ItemSpec.of(org.bukkit.Material.STICK).exact()).isNull();
     }
+
+    @Test
+    void aBoardStatueStandsForNobodyUntilItHasAHolder() {
+        Mannequin empty = Mannequin.boardStatue("MQ1", UUID.randomUUID(), "fishing:level", 3, "world", 0, 64, 0, 0f);
+
+        assertThat(empty.isStatue()).isTrue();
+        assertThat(empty.isBoardBound()).isTrue();
+        assertThat(empty.statueOf()).isNull();
+        assertThat(empty.skinSource()).isNull();
+        assertThat(empty.displayName()).isEqualTo("Nobody yet");
+        assertThat(empty.boardPlace()).isEqualTo(3);
+    }
+
+    @Test
+    void aHolderGivesTheStatueTheirSkinAndNameAndNobodyTakesThemBack() {
+        UUID holder = UUID.randomUUID();
+        Mannequin held = Mannequin.boardStatue("MQ1", UUID.randomUUID(), "fishing:level", 1, "world", 0, 64, 0, 0f)
+                .withHolder(holder, "Rain");
+
+        assertThat(held.statueOf()).isEqualTo(holder);
+        assertThat(held.skinSource()).isEqualTo(holder);
+        assertThat(held.displayName()).isEqualTo("Rain");
+        assertThat(held.boardId()).isEqualTo("fishing:level");
+
+        Mannequin empty = held.withHolder(null, "Rain");
+
+        assertThat(empty.statueOf()).isNull();
+        assertThat(empty.skinSource()).isNull();
+        assertThat(empty.displayName()).isEqualTo("Nobody yet");
+        assertThat(empty.isBoardBound()).isTrue();
+    }
+
+    @Test
+    void theBindingSurvivesEveryOtherChange() {
+        Mannequin bound = Mannequin.boardStatue("MQ1", UUID.randomUUID(), "fishing:level", 2, "world", 0, 64, 0, 0f);
+
+        Mannequin changed = bound.withPose(StatuePose.SWIMMING).withYaw(90f).withDisplayName("x")
+                .withSlot(org.bukkit.inventory.EquipmentSlot.HAND, ItemSpec.of(org.bukkit.Material.STICK));
+
+        assertThat(changed.boardId()).isEqualTo("fishing:level");
+        assertThat(changed.boardPlace()).isEqualTo(2);
+    }
+
+    @Test
+    void aBlankBoardIsNoBoardAndAPlaceIsAtLeastOne() {
+        Mannequin none = new Mannequin("MQ1", UUID.randomUUID(), "world", 0, 64, 0, "Dummy", null, null, true,
+                false, null, null, 0f, null, null, null, null, " ", 5);
+        Mannequin low = new Mannequin("MQ2", UUID.randomUUID(), "world", 0, 64, 0, "Dummy", null, null, true,
+                false, null, null, 0f, null, null, null, null, "a:b", -4);
+
+        assertThat(none.isBoardBound()).isFalse();
+        assertThat(none.boardPlace()).isZero();
+        assertThat(low.boardPlace()).isEqualTo(1);
+    }
 }

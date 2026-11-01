@@ -1,12 +1,14 @@
 package de.raindancer.modules.mannequin.command;
 
 import de.raindancer.core.platform.command.MistypedCommand;
+import de.raindancer.core.ui.board.Leaderboards;
 import de.raindancer.modules.mannequin.MannequinServices;
 import de.raindancer.modules.mannequin.MannequinSettings;
 import de.raindancer.modules.mannequin.model.Mannequin;
 import de.raindancer.modules.mannequin.model.MannequinKind;
 import de.raindancer.modules.mannequin.model.ItemSpec;
 import de.raindancer.modules.mannequin.model.StatuePose;
+import de.raindancer.modules.mannequin.rules.BoardStatueRule;
 import de.raindancer.modules.mannequin.rules.CreateMannequinRule;
 import de.raindancer.modules.mannequin.rules.StatueTargetRule;
 import de.raindancer.modules.mannequin.util.PermissionNodes;
@@ -144,6 +146,10 @@ public final class MannequinCommand implements IMannequinCommand {
                 statuePose(live, player, args);
                 return;
             }
+            case "top" -> {
+                statueTop(live, player, args);
+                return;
+            }
             case "hold" -> {
                 withStatue(live, player, args, 2, statue -> statueHold(live, player, statue));
                 return;
@@ -179,6 +185,41 @@ public final class MannequinCommand implements IMannequinCommand {
                     }
                     placeStatue(live, player, found.getId(), found.getName(), anchor);
                 }));
+    }
+
+    /**
+     * {@code /mannequin statue top <board> <place>}: a statue of whoever holds that place on a
+     * leaderboard, now and later. The board has to exist when typed — a typo should be told, not
+     * placed as a statue of nobody — though a statue outlives its board's plugin being removed.
+     */
+    private void statueTop(MannequinServices live, Player player, String[] args) {
+        List<String> boards = Leaderboards.ids();
+        if (args.length < 4) {
+            live.messages().send(player, "mannequin.statue.top.usage");
+            return;
+        }
+        String board = args[2].toLowerCase(Locale.ROOT);
+        if (boards.isEmpty()) {
+            live.messages().send(player, "mannequin.statue.top.no-boards");
+            return;
+        }
+        if (!boards.contains(board)) {
+            live.messages().send(player, "mannequin.statue.top.unknown-board", "board", args[2],
+                    "boards", String.join(", ", boards));
+            return;
+        }
+        int place;
+        try {
+            place = Integer.parseInt(args[3].trim());
+        } catch (NumberFormatException notANumber) {
+            place = 0;
+        }
+        if (!BoardStatueRule.validPlace(place)) {
+            live.messages().send(player, "mannequin.statue.top.bad-place", "most", BoardStatueRule.MOST_PLACES);
+            return;
+        }
+        Mannequin statue = live.mannequins().createBoardStatue(player.getUniqueId(), board, place, player.getLocation());
+        live.messages().send(player, "mannequin.statue.top.done", "place", place, "board", board, "id", statue.id());
     }
 
     /** {@code /mannequin statue pose <pose> [id]} */
@@ -357,7 +398,7 @@ public final class MannequinCommand implements IMannequinCommand {
         }
         if (args.length == 2 && sub.equals("statue")) {
             String typed = args[1].toLowerCase(Locale.ROOT);
-            return java.util.stream.Stream.concat(java.util.stream.Stream.of("pose", "hold", "remove"),
+            return java.util.stream.Stream.concat(java.util.stream.Stream.of("pose", "hold", "remove", "top"),
                             Bukkit.getOnlinePlayers().stream().map(Player::getName))
                     .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(typed))
                     .toList();
@@ -366,6 +407,13 @@ public final class MannequinCommand implements IMannequinCommand {
             String typed = args[2].toLowerCase(Locale.ROOT);
             return java.util.Arrays.stream(StatuePose.values()).map(StatuePose::typed)
                     .filter(name -> name.startsWith(typed)).toList();
+        }
+        if (args.length == 3 && sub.equals("statue") && args[1].equalsIgnoreCase("top")) {
+            String typed = args[2].toLowerCase(Locale.ROOT);
+            return Leaderboards.ids().stream().filter(id -> id.startsWith(typed)).toList();
+        }
+        if (args.length == 4 && sub.equals("statue") && args[1].equalsIgnoreCase("top")) {
+            return List.of("1", "2", "3").stream().filter(place -> place.startsWith(args[3])).toList();
         }
         boolean statueId = sub.equals("statue") && ((args.length == 3 && List.of("hold", "remove")
                 .contains(args[1].toLowerCase(Locale.ROOT))) || (args.length == 4 && args[1].equalsIgnoreCase("pose")));

@@ -145,6 +145,22 @@ public final class MannequinService implements IMannequinService {
         return statue;
     }
 
+    /** A statue of whoever holds {@code place} on {@code boardId}, on the block the player stands on. */
+    public Mannequin createBoardStatue(UUID owner, String boardId, int place, Location anchor) {
+        Mannequin statue = Mannequin.boardStatue(registry.nextId(), owner, boardId, place,
+                anchor.getWorld().getName(), anchor.getBlockX(), anchor.getBlockY(), anchor.getBlockZ(),
+                anchor.getYaw());
+        registry.put(statue);
+        store.save(statue);
+        try {
+            spawn(statue);
+        } catch (RuntimeException failed) {
+            remove(statue.id());
+            throw failed;
+        }
+        return statue;
+    }
+
     /** Removes it entirely: despawns the live entity, forgets it, and deletes its file. */
     public void remove(String id) {
         despawn(id);

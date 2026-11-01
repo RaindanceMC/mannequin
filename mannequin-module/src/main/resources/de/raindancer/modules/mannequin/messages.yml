@@ -38,10 +38,16 @@ mannequin:
     not-found: "<red>Nobody called <white><name></white> could be found. Check the spelling."
     done: "<green>A statue of <white><name></white> stands here now (<white><id></white>). Nothing can hurt it."
     not-for-statues: "<red>A statue wears its player's own skin and keeps no training stats."
-    usage: "<red>Whose statue? /mannequin statue <player>, or pose, hold and remove for one standing here."
+    usage: "<red>Whose statue? /mannequin statue <player>, or top <board> <place>; pose, hold and remove work on one standing here."
     none-here: "<red>No statue in sight. Look at one, stand next to it, or add its id."
     not-a-statue: "<red><white><id></white> is a training dummy, not a statue."
     removed: "<green>The statue of <white><name></white> (<white><id></white>) is gone."
+    top:
+      usage: "<red>Which place? /mannequin statue top <board> <place 1-10>."
+      unknown-board: "<red>There is no leaderboard called <white><board></white>. Boards: <white><boards></white>."
+      no-boards: "<red>No plugin has registered a leaderboard on this server."
+      bad-place: "<red>The place has to be a number from <white>1</white> to <white><most></white>."
+      done: "<green>A statue of place <white>#<place></white> on <white><board></white> stands here now (<white><id></white>). It shows whoever holds the place."
     hold:
       done: "<green><white><name></white> now holds what you hold. An empty hand empties its hand."
     pose:

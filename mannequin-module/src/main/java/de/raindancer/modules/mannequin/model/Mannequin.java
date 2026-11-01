@@ -65,12 +65,31 @@ import java.util.UUID;
  *                             and styled name — see {@code service.StatueService}.
  * @param pose                 how a {@link MannequinKind#PLAYER} stands, sits or lies — never
  *                             {@code null}, {@link StatuePose#STANDING} for anything older
+ * @param boardId              the leaderboard this statue stands for a place on, or {@code null}
+ *                             for a statue of one fixed player (or a training dummy). The holder
+ *                             of the place is then kept in {@code statueOf}, {@code skinSource}
+ *                             and {@code displayName} by {@code service.BoardStatueService} —
+ *                             {@code statueOf} is {@code null} while nobody holds it.
+ * @param boardPlace           which place on that board, 1 is the top; {@code 0} without a board
  */
 public record Mannequin(String id, UUID owner, String world, int x, int y, int z,
                         String displayName, Map<EquipmentSlot, ItemSpec> loadout,
                         UUID skinSource, boolean blocksWithShield, boolean emitsRedstoneSignal,
                         Double maxHealthOverride, MannequinKind kind, float yaw, Set<UUID> trusted,
-                        UUID claimId, UUID statueOf, StatuePose pose) {
+                        UUID claimId, UUID statueOf, StatuePose pose, String boardId, int boardPlace) {
+
+    /** What a statue of an empty place is called. */
+    public static final String NOBODY = "Nobody yet";
+
+    /** The mannequin as it was before statues could stand for a leaderboard place. */
+    public Mannequin(String id, UUID owner, String world, int x, int y, int z,
+                     String displayName, Map<EquipmentSlot, ItemSpec> loadout,
+                     UUID skinSource, boolean blocksWithShield, boolean emitsRedstoneSignal,
+                     Double maxHealthOverride, MannequinKind kind, float yaw, Set<UUID> trusted,
+                     UUID claimId, UUID statueOf, StatuePose pose) {
+        this(id, owner, world, x, y, z, displayName, loadout, skinSource, blocksWithShield,
+                emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, pose, null, 0);
+    }
 
     public Mannequin {
         if (id == null || id.isBlank()) {
@@ -89,6 +108,8 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
         }
         kind = kind == null ? MannequinKind.PLAYER : kind;
         pose = pose == null ? StatuePose.STANDING : pose;
+        boardId = boardId == null || boardId.isBlank() ? null : boardId;
+        boardPlace = boardId == null ? 0 : Math.max(1, boardPlace);
         trusted = trusted == null ? Set.of() : Set.copyOf(trusted);
         if (trusted.contains(owner)) {
             trusted = new LinkedHashSet<>(trusted);
@@ -125,8 +146,33 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
                 null, MannequinKind.PLAYER, yaw, Set.of(), null, depicted, StatuePose.STANDING);
     }
 
+    /**
+     * A statue of whoever holds place {@code place} on {@code boardId}: nobody to begin with, until
+     * {@code service.BoardStatueService} has asked the board.
+     */
+    public static Mannequin boardStatue(String id, UUID owner, String boardId, int place,
+                                        String world, int x, int y, int z, float yaw) {
+        return new Mannequin(id, owner, world, x, y, z, NOBODY, Map.of(), null, false, false,
+                null, MannequinKind.PLAYER, yaw, Set.of(), null, null, StatuePose.STANDING, boardId, place);
+    }
+
+    /** A statue of one player, or of a place on a board; a training dummy is neither. */
     public boolean isStatue() {
-        return statueOf != null;
+        return statueOf != null || boardId != null;
+    }
+
+    public boolean isBoardBound() {
+        return boardId != null;
+    }
+
+    /**
+     * The same board statue, now standing for {@code holder} — {@code null} for nobody, which puts the
+     * neutral look back (default skin, {@link #NOBODY}).
+     */
+    public Mannequin withHolder(UUID holder, String name) {
+        String shown = holder == null || name == null || name.isBlank() ? NOBODY : name;
+        return new Mannequin(id, owner, world, x, y, z, shown, loadout, holder, blocksWithShield,
+                emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, holder, pose, boardId, boardPlace);
     }
 
     /** The barrel this mannequin's redstone pulse is written to — directly under its feet. */
@@ -149,7 +195,7 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
 
     public Mannequin withDisplayName(String name) {
         return new Mannequin(id, owner, world, x, y, z, name, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, pose);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, pose, boardId, boardPlace);
     }
 
     public Mannequin withSlot(EquipmentSlot slot, ItemSpec spec) {
@@ -160,47 +206,47 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
             next.put(slot, spec);
         }
         return new Mannequin(id, owner, world, x, y, z, displayName, next, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, pose);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, pose, boardId, boardPlace);
     }
 
     public Mannequin withSkinSource(UUID skin) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skin,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, pose);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, pose, boardId, boardPlace);
     }
 
     public Mannequin withBlocksWithShield(boolean blocks) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocks, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, pose);
+                blocks, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, pose, boardId, boardPlace);
     }
 
     public Mannequin withEmitsRedstoneSignal(boolean emits) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emits, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, pose);
+                blocksWithShield, emits, maxHealthOverride, kind, yaw, trusted, claimId, statueOf, pose, boardId, boardPlace);
     }
 
     /** @param health {@code null} to fall back to the server-wide default again */
     public Mannequin withMaxHealthOverride(Double health) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, health, kind, yaw, trusted, claimId, statueOf, pose);
+                blocksWithShield, emitsRedstoneSignal, health, kind, yaw, trusted, claimId, statueOf, pose, boardId, boardPlace);
     }
 
     /** Which mob this is spawned as — see {@link MannequinKind}. */
     public Mannequin withKind(MannequinKind newKind) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, newKind, yaw, trusted, claimId, statueOf, pose);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, newKind, yaw, trusted, claimId, statueOf, pose, boardId, boardPlace);
     }
 
     /** {@code null} stands it up again. */
     public Mannequin withPose(StatuePose newPose) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
                 blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, claimId,
-                statueOf, newPose);
+                statueOf, newPose, boardId, boardPlace);
     }
 
     /** Which way it faces, in degrees. */
     public Mannequin withYaw(float newYaw) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, newYaw, trusted, claimId, statueOf, pose);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, newYaw, trusted, claimId, statueOf, pose, boardId, boardPlace);
     }
 
     /** Trusts one more person with this mannequin — a no-op if they already own it or are trusted. */
@@ -211,7 +257,7 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
         Set<UUID> next = new LinkedHashSet<>(trusted);
         next.add(player);
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, next, claimId, statueOf, pose);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, next, claimId, statueOf, pose, boardId, boardPlace);
     }
 
     /** Withdraws trust from somebody — a no-op if they were never trusted. */
@@ -222,7 +268,7 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
         Set<UUID> next = new LinkedHashSet<>(trusted);
         next.remove(player);
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, next, claimId, statueOf, pose);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, next, claimId, statueOf, pose, boardId, boardPlace);
     }
 
     /** Whether this player owns the mannequin or has been trusted with it. */
@@ -239,7 +285,7 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
      */
     public Mannequin withClaimId(UUID newClaimId) {
         return new Mannequin(id, owner, world, x, y, z, displayName, loadout, skinSource,
-                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, newClaimId, statueOf, pose);
+                blocksWithShield, emitsRedstoneSignal, maxHealthOverride, kind, yaw, trusted, newClaimId, statueOf, pose, boardId, boardPlace);
     }
 
     public ItemSpec specFor(EquipmentSlot slot) {

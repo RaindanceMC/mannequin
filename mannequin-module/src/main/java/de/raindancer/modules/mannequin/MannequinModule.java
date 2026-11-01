@@ -3,6 +3,8 @@ package de.raindancer.modules.mannequin;
 import de.raindancer.core.data.settings.SettingsStore;
 import de.raindancer.core.platform.log.LogChannel;
 import de.raindancer.core.platform.util.Scheduling;
+import de.raindancer.core.ui.board.Leaderboard;
+import de.raindancer.core.ui.board.Leaderboards;
 import de.raindancer.modules.api.FlexModule;
 import de.raindancer.modules.api.ModuleCommand;
 import de.raindancer.modules.api.ModuleContext;
@@ -15,6 +17,7 @@ import de.raindancer.modules.mannequin.listener.MannequinStatueListener;
 import de.raindancer.modules.mannequin.listener.MannequinTargetListener;
 import de.raindancer.modules.mannequin.listener.MannequinWorldListener;
 import de.raindancer.modules.mannequin.model.Mannequin;
+import de.raindancer.modules.mannequin.rules.BoardStatueRule;
 import de.raindancer.modules.mannequin.rules.ComboWindowRule;
 import de.raindancer.modules.mannequin.rules.DurabilityRule;
 import de.raindancer.modules.mannequin.rules.ShieldBlockRule;
@@ -23,6 +26,7 @@ import de.raindancer.modules.mannequin.screen.LoadoutScreen;
 import de.raindancer.modules.mannequin.screen.MannequinListMenu;
 import de.raindancer.modules.mannequin.screen.SkinScreen;
 import de.raindancer.modules.mannequin.screen.StatsScreen;
+import de.raindancer.modules.mannequin.service.BoardStatueService;
 import de.raindancer.modules.mannequin.service.MannequinCombatService;
 import de.raindancer.modules.mannequin.service.MannequinEquipService;
 import de.raindancer.modules.mannequin.service.MannequinPotionService;
@@ -51,7 +55,7 @@ import java.util.List;
  */
 public final class MannequinModule implements FlexModule {
 
-    private static final ModuleInfo INFO = ModuleInfo.of("mannequin", "Mannequin", "1.14.0")
+    private static final ModuleInfo INFO = ModuleInfo.of("mannequin", "Mannequin", "1.15.0")
             .describedAs("Training dummies an owner spawns and dresses: real health that can be "
                     + "brought down and respawns identically afterwards, every hit tracked, "
                     + "blocking with a shield, and never leaving anything obtainable behind.")
@@ -72,6 +76,9 @@ public final class MannequinModule implements FlexModule {
 
     /** As often as Core redraws an animated nametag, so a statue's gradient flows the same. */
     private static final long STATUE_NAME_TICKS = 2L;
+
+    /** How often a leaderboard statue asks its board who holds the place — 30 seconds. */
+    private static final long BOARD_STATUE_TICKS = 600L;
 
     private LogChannel log;
     private SettingsStore<MannequinSettings> settings;
@@ -138,6 +145,15 @@ public final class MannequinModule implements FlexModule {
                 identities::nametag, identities::subtitle,
                 (entity, task) -> Scheduling.entity(context.plugin(), entity, task));
         mannequins.statues(statues);
+        var boardStatues = new BoardStatueService(registry, new BoardStatueRule(),
+                board -> Leaderboards.find(board).map(Leaderboard::title),
+                Leaderboards::top, mannequins::save, mannequins::liveEntity,
+                (entity, player) -> mannequins.applySkin(entity, player, true),
+                statues::nameOf,
+                (entity, task) -> Scheduling.entity(context.plugin(), entity, task),
+                task -> Scheduling.async(context.plugin(), task),
+                task -> Scheduling.global(context.plugin(), task));
+        statues.boards(boardStatues);
 
         // Every world already loaded by the time this module starts gets its mannequins spawned now;
         // worlds that load later are handled by MannequinWorldListener.
@@ -151,7 +167,7 @@ public final class MannequinModule implements FlexModule {
         context.listener(new MannequinWorldListener(mannequins));
         context.listener(new MannequinKnockbackListener(mannequins));
         context.listener(new MannequinTargetListener(mannequins));
-        context.listener(new MannequinStatueListener(registry, statues));
+        context.listener(new MannequinStatueListener(registry, statues, boardStatues));
         MannequinPack.contribute(context.plugin(), context.core());
         context.closeWith(() -> MannequinPack.withdraw(context.core()));
 
@@ -179,6 +195,11 @@ public final class MannequinModule implements FlexModule {
                 task -> periodicUpkeep());
         if (upkeepTimer != null) {
             context.closeWith(upkeepTimer::cancel);
+        }
+        var boardTimer = Scheduling.globalTimer(context.plugin(), BOARD_STATUE_TICKS, BOARD_STATUE_TICKS,
+                task -> boardStatues.refreshAll());
+        if (boardTimer != null) {
+            context.closeWith(boardTimer::cancel);
         }
         var statueNameTimer = Scheduling.globalTimer(context.plugin(), STATUE_NAME_TICKS, STATUE_NAME_TICKS,
                 task -> statues.refreshNames());

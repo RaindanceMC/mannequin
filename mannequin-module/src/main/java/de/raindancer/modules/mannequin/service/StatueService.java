@@ -4,6 +4,7 @@ import de.raindancer.modules.mannequin.MannequinSettings;
 import de.raindancer.modules.mannequin.model.Mannequin;
 import de.raindancer.modules.mannequin.store.MannequinRegistry;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -34,6 +35,7 @@ public final class StatueService implements IMannequinService {
     private final BiFunction<UUID, String, Component> nametag;
     private final Function<UUID, Optional<Component>> subtitle;
     private final BiConsumer<Entity, Runnable> onEntityThread;
+    private volatile BoardStatueService boards;
 
     /**
      * @param wearSkinOf     puts an online player's own session profile on a live mannequin
@@ -58,6 +60,11 @@ public final class StatueService implements IMannequinService {
         // Nothing configurable yet.
     }
 
+    /** Set once at enable; until then a board statue shows only its place and board. */
+    public void boards(BoardStatueService boards) {
+        this.boards = boards;
+    }
+
     /** Everything that makes a freshly spawned mannequin a statue, on top of what every mannequin gets. */
     public void dress(LivingEntity entity, Mannequin statue) {
         entity.customName(nameOf(statue));
@@ -65,8 +72,16 @@ public final class StatueService implements IMannequinService {
         entity.setInvulnerable(true);
         entity.setCanPickupItems(false);
         if (entity instanceof org.bukkit.entity.Mannequin mannequin) {
-            // null hides the description line; vanilla's default would read "NPC".
-            mannequin.setDescription(subtitle.apply(statue.statueOf()).orElse(null));
+            BoardStatueService board = boards;
+            if (statue.isBoardBound()) {
+                mannequin.setDescription(board == null ? null : board.descriptionOf(statue));
+            } else {
+                // null hides the description line; vanilla's default would read "NPC".
+                mannequin.setDescription(subtitle.apply(statue.statueOf()).orElse(null));
+            }
+        }
+        if (statue.isBoardBound() && boards != null) {
+            boards.spawned(statue);
         }
     }
 
@@ -111,7 +126,11 @@ public final class StatueService implements IMannequinService {
         }
     }
 
-    private Component nameOf(Mannequin statue) {
+    /** Their styled nametag, or — a board place nobody holds — a plain grey name. */
+    public Component nameOf(Mannequin statue) {
+        if (statue.statueOf() == null) {
+            return Component.text(statue.displayName(), NamedTextColor.GRAY);
+        }
         return nametag.apply(statue.statueOf(), statue.displayName());
     }
 }

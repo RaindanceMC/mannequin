@@ -231,6 +231,50 @@ class MannequinStoreTest {
     }
 
     @Test
+    @DisplayName("a board statue round-trips with its board, place and current holder")
+    void boardStatueRoundTrips() {
+        MannequinStore store = new MannequinStore(folder);
+        UUID holder = UUID.randomUUID();
+        store.save(Mannequin.boardStatue("MQ1", UUID.randomUUID(), "fishing:level", 2, "world", 0, 64, 0, 0f)
+                .withHolder(holder, "Rain"));
+
+        Mannequin loaded = store.loadAll().getFirst();
+
+        assertThat(loaded.boardId()).isEqualTo("fishing:level");
+        assertThat(loaded.boardPlace()).isEqualTo(2);
+        assertThat(loaded.statueOf()).isEqualTo(holder);
+        assertThat(loaded.skinSource()).isEqualTo(holder);
+        assertThat(loaded.displayName()).isEqualTo("Rain");
+        assertThat(loaded.isStatue()).isTrue();
+    }
+
+    @Test
+    @DisplayName("an empty board place round-trips as a statue of nobody, not as a training dummy")
+    void emptyBoardPlaceStaysAStatue() {
+        MannequinStore store = new MannequinStore(folder);
+        store.save(Mannequin.boardStatue("MQ1", UUID.randomUUID(), "fishing:level", 1, "world", 0, 64, 0, 0f));
+
+        Mannequin loaded = store.loadAll().getFirst();
+
+        assertThat(loaded.statueOf()).isNull();
+        assertThat(loaded.isStatue()).isTrue();
+        assertThat(loaded.displayName()).isEqualTo("Nobody yet");
+    }
+
+    @Test
+    @DisplayName("everything stored before board statues existed reads as bound to no board")
+    void oldFilesHaveNoBoard() {
+        MannequinStore store = new MannequinStore(folder);
+        store.save(Mannequin.statue("MQ1", UUID.randomUUID(), UUID.randomUUID(), "Rain", "world", 0, 64, 0, 0f));
+        store.save(Mannequin.freshlyPlaced("MQ2", UUID.randomUUID(), "world", 0, 64, 0));
+
+        assertThat(store.loadAll()).allSatisfy(each -> {
+            assertThat(each.boardId()).isNull();
+            assertThat(each.isBoardBound()).isFalse();
+        });
+    }
+
+    @Test
     @DisplayName("a pose round-trips, and a file without one stands")
     void poseRoundTrips() {
         MannequinStore store = new MannequinStore(folder);

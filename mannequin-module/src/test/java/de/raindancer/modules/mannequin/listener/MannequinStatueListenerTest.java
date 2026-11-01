@@ -1,6 +1,7 @@
 package de.raindancer.modules.mannequin.listener;
 
 import de.raindancer.modules.mannequin.model.Mannequin;
+import de.raindancer.modules.mannequin.service.BoardStatueService;
 import de.raindancer.modules.mannequin.service.StatueService;
 import de.raindancer.modules.mannequin.store.MannequinRegistry;
 import org.bukkit.entity.Player;
@@ -21,6 +22,7 @@ class MannequinStatueListenerTest {
 
     private final MannequinRegistry registry = new MannequinRegistry();
     private final StatueService statues = mock(StatueService.class);
+    private final BoardStatueService boards = mock(BoardStatueService.class);
 
     private EntityDamageEvent damageTo(String id) {
         UUID entityId = UUID.randomUUID();
@@ -38,7 +40,18 @@ class MannequinStatueListenerTest {
         registry.put(Mannequin.statue("MQ1", UUID.randomUUID(), UUID.randomUUID(), "Rain", "world", 0, 64, 0, 0f));
         EntityDamageEvent event = damageTo("MQ1");
 
-        new MannequinStatueListener(registry, statues).onDamage(event);
+        new MannequinStatueListener(registry, statues, boards).onDamage(event);
+
+        verify(event).setCancelled(true);
+    }
+
+    @Test
+    @DisplayName("a statue of a leaderboard place nobody holds is just as unhurt")
+    void aBoardStatueTakesNoDamage() {
+        registry.put(Mannequin.boardStatue("MQ1", UUID.randomUUID(), "fishing:level", 1, "world", 0, 64, 0, 0f));
+        EntityDamageEvent event = damageTo("MQ1");
+
+        new MannequinStatueListener(registry, statues, boards).onDamage(event);
 
         verify(event).setCancelled(true);
     }
@@ -49,7 +62,7 @@ class MannequinStatueListenerTest {
         registry.put(Mannequin.freshlyPlaced("MQ1", UUID.randomUUID(), "world", 0, 64, 0));
         EntityDamageEvent event = damageTo("MQ1");
 
-        new MannequinStatueListener(registry, statues).onDamage(event);
+        new MannequinStatueListener(registry, statues, boards).onDamage(event);
 
         verify(event, never()).setCancelled(anyBoolean());
     }
@@ -61,8 +74,9 @@ class MannequinStatueListenerTest {
         PlayerJoinEvent event = mock(PlayerJoinEvent.class);
         when(event.getPlayer()).thenReturn(player);
 
-        new MannequinStatueListener(registry, statues).onJoin(event);
+        new MannequinStatueListener(registry, statues, boards).onJoin(event);
 
         verify(statues).playerJoined(player);
+        verify(boards).refreshAll();
     }
 }
