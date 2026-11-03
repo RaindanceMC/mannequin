@@ -200,6 +200,42 @@ public final class MannequinService implements IMannequinService {
         }
     }
 
+    /**
+     * A chunk came in: puts back every mannequin standing in it whose live entity is gone. The entities are not
+     * saved with the world (see {@link #configureCommon}), so the server drops them with their chunk — and without
+     * this a statue at a spawn nobody stood near was simply gone until the next restart. Call on the chunk's thread,
+     * a tick after it loaded.
+     */
+    public void spawnMissingIn(org.bukkit.Chunk chunk) {
+        String world = chunk.getWorld().getName();
+        for (Mannequin mannequin : registry.inWorld(world)) {
+            if (!mannequin.standsIn(world, chunk.getX(), chunk.getZ())) {
+                continue;
+            }
+            Optional<LivingEntity> live = liveEntity(mannequin.id());
+            if (live.isPresent() && live.get().isValid()) {
+                continue;
+            }
+            try {
+                spawn(mannequin);
+            } catch (RuntimeException failed) {
+                if (log != null) {
+                    log.warn(failed, "{} could not be put back in {} and was skipped.", mannequin.id(), world);
+                }
+            }
+        }
+    }
+
+    /** A chunk goes: its mannequins' live entities go with it (never their stored records). */
+    public void letGoIn(org.bukkit.Chunk chunk) {
+        String world = chunk.getWorld().getName();
+        for (Mannequin mannequin : registry.inWorld(world)) {
+            if (mannequin.standsIn(world, chunk.getX(), chunk.getZ())) {
+                despawn(mannequin.id());
+            }
+        }
+    }
+
     /** Despawns the live entity for every mannequin in this world — called when it unloads. */
     public void despawnAllIn(String worldName) {
         for (Mannequin mannequin : registry.inWorld(worldName)) {

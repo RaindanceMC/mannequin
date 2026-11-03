@@ -132,7 +132,7 @@
         <!-- 1.13.0: /mannequin statue <player> — never hurt, wearing that player's current skin and SMP-styled name. -->
         <!-- 1.14.0: statue pose/hold/remove; a fishing rod a statue holds is drawn cast (own item model in the server pack). -->
         <!-- 1.15.0: statues that stand for a place on a leaderboard (/mannequin statue top <board> <place>), RainsCore 2.23. -->
-        <plugin.version>1.15.0</plugin.version>
+        <plugin.version>1.15.1</plugin.version>
     </properties>
 
     <dependencies>

@@ -119,6 +119,11 @@ public record Mannequin(String id, UUID owner, String world, int x, int y, int z
     }
 
     /** A freshly placed, {@link MannequinKind#PLAYER} mannequin — every call site from before kinds existed. */
+    /** Whether it stands in this chunk of this world. */
+    public boolean standsIn(String inWorld, int chunkX, int chunkZ) {
+        return world.equals(inWorld) && (x >> 4) == chunkX && (z >> 4) == chunkZ;
+    }
+
     public static Mannequin freshlyPlaced(String id, UUID owner, String world, int x, int y, int z) {
         return freshlyPlaced(id, owner, world, x, y, z, MannequinKind.PLAYER, 0f);
     }

@@ -291,4 +291,14 @@ class MannequinTest {
         assertThat(none.boardPlace()).isZero();
         assertThat(low.boardPlace()).isEqualTo(1);
     }
+
+    @Test
+    void standsInTheChunkItsBlockIsIn() {
+        Mannequin there = Mannequin.freshlyPlaced("MQ9", UUID.randomUUID(), "world", -1, 64, 31);
+        assertThat(there.standsIn("world", -1, 1)).isTrue();
+        assertThat(there.standsIn("world", 0, 1)).isFalse();
+        assertThat(there.standsIn("world_nether", -1, 1)).isFalse();
+        Mannequin far = Mannequin.freshlyPlaced("MQ10", UUID.randomUUID(), "world", 160, 64, -17);
+        assertThat(far.standsIn("world", 10, -2)).isTrue();
+    }
 }

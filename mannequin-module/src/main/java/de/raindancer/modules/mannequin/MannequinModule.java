@@ -55,7 +55,7 @@ import java.util.List;
  */
 public final class MannequinModule implements FlexModule {
 
-    private static final ModuleInfo INFO = ModuleInfo.of("mannequin", "Mannequin", "1.15.0")
+    private static final ModuleInfo INFO = ModuleInfo.of("mannequin", "Mannequin", "1.15.1")
             .describedAs("Training dummies an owner spawns and dresses: real health that can be "
                     + "brought down and respawns identically afterwards, every hit tracked, "
                     + "blocking with a shield, and never leaving anything obtainable behind.")
@@ -164,7 +164,7 @@ public final class MannequinModule implements FlexModule {
         context.listener(new MannequinCombatListener(registry, combat));
         context.listener(new MannequinDeathListener(registry, mannequins));
         context.listener(new MannequinPickupListener(registry, potions));
-        context.listener(new MannequinWorldListener(mannequins));
+        context.listener(new MannequinWorldListener(mannequins, context.plugin()));
         context.listener(new MannequinKnockbackListener(mannequins));
         context.listener(new MannequinTargetListener(mannequins));
         context.listener(new MannequinStatueListener(registry, statues, boardStatues));
