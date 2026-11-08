@@ -195,7 +195,8 @@ public final class MannequinCommand implements IMannequinCommand {
     private void statueTop(MannequinServices live, Player player, String[] args) {
         List<String> boards = Leaderboards.ids();
         if (args.length < 4) {
-            live.messages().send(player, "mannequin.statue.top.usage");
+            live.messages().send(player, "mannequin.statue.top.usage",
+                    "boards", boards.isEmpty() ? "none registered" : String.join(", ", boards));
             return;
         }
         String board = args[2].toLowerCase(Locale.ROOT);
@@ -328,6 +329,7 @@ public final class MannequinCommand implements IMannequinCommand {
             live.messages().send(sender, "mannequin.list.empty");
             return;
         }
+        live.messages().send(sender, "mannequin.list.header", "count", owned.size());
         for (Mannequin mannequin : owned) {
             live.messages().send(sender, "mannequin.list.entry", "id", mannequin.id(),
                     "name", mannequin.displayName(), "world", mannequin.world());
@@ -370,7 +372,7 @@ public final class MannequinCommand implements IMannequinCommand {
             return;
         }
         if (args.length < 2) {
-            live.messages().send(sender, "mannequin.missing-id");
+            live.messages().send(sender, "mannequin.missing-id", "usage", "/mannequin " + args[0].toLowerCase(Locale.ROOT) + " <id>");
             return;
         }
         Optional<Mannequin> found = live.registry().get(args[1]);
@@ -386,7 +388,10 @@ public final class MannequinCommand implements IMannequinCommand {
                                                String @NotNull [] args) {
         if (args.length <= 1) {
             String typed = args.length == 1 ? args[0].toLowerCase(Locale.ROOT) : "";
-            return SUBCOMMANDS.stream().filter(name -> name.startsWith(typed)).toList();
+            boolean mayStatue = source.getSender().hasPermission(PermissionNodes.STATUE);
+            return SUBCOMMANDS.stream()
+                    .filter(name -> mayStatue || !name.equals("statue"))
+                    .filter(name -> name.startsWith(typed)).toList();
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         if (args.length == 2 && sub.equals("create")) {
@@ -413,7 +418,8 @@ public final class MannequinCommand implements IMannequinCommand {
             return Leaderboards.ids().stream().filter(id -> id.startsWith(typed)).toList();
         }
         if (args.length == 4 && sub.equals("statue") && args[1].equalsIgnoreCase("top")) {
-            return List.of("1", "2", "3").stream().filter(place -> place.startsWith(args[3])).toList();
+            return java.util.stream.IntStream.rangeClosed(1, BoardStatueRule.MOST_PLACES).mapToObj(Integer::toString)
+                    .filter(place -> place.startsWith(args[3])).toList();
         }
         boolean statueId = sub.equals("statue") && ((args.length == 3 && List.of("hold", "remove")
                 .contains(args[1].toLowerCase(Locale.ROOT))) || (args.length == 4 && args[1].equalsIgnoreCase("pose")));

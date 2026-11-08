@@ -5,12 +5,12 @@
 # here is YAML's idea of a truth value — see rtp-module's messages.yml for why both of those matter.
 mannequin:
 
-  usage: "<gray>/mannequin create|statue|remove|loadout|skin|stats|list"
+  usage: "<gray>Usage: <white>/mannequin</white> [create [kind] | list | loadout <id> | skin <id> | stats <id> | remove <id> | statue <player>]"
   only-a-player: "<red>Only a player standing in the world can do that."
-  missing-id: "<red>Which one? /mannequin <remove|loadout|skin|stats> <id>."
-  unknown-id: "<red>There is no mannequin called <white><id></white>."
+  missing-id: "<red>Which one? Usage: <white><usage></white> — <white>/mannequin list</white> shows your ids."
+  unknown-id: "<red>There is no mannequin called <white><id></white>. <white>/mannequin list</white> shows the ids you can use."
   busy: "<red>You are already being asked something else. Answer that one first."
-  no-permission: "<red>You are neither its owner nor trusted with it."
+  no-permission: "<red>You are neither its owner nor trusted with it. Ask its owner to trust you."
 
   redstone:
     barrel-at: "<yellow>The barrel is at <white><x> <y> <z></white>. Build a comparator beside it, at that exact height."
@@ -29,7 +29,7 @@ mannequin:
 
   create:
     no-permission: "<red>You may not create a mannequin here."
-    done: "<green>Created mannequin <white><id></white>. It stands very still."
+    done: "<green>Created mannequin <white><id></white>. It stands very still. <gray>/mannequin opens it to dress it, skin it or share it."
     unknown-kind: "<red>There is no mannequin kind called <white><kind></white>. Try player, zombie, skeleton, wither or iron_golem."
 
   statue:
@@ -43,7 +43,7 @@ mannequin:
     not-a-statue: "<red><white><id></white> is a training dummy, not a statue."
     removed: "<green>The statue of <white><name></white> (<white><id></white>) is gone."
     top:
-      usage: "<red>Which place? /mannequin statue top <board> <place 1-10>."
+      usage: "<red>Which place? Usage: <white>/mannequin statue top <board> <place 1-10></white>. Boards: <white><boards></white>."
       unknown-board: "<red>There is no leaderboard called <white><board></white>. Boards: <white><boards></white>."
       no-boards: "<red>No plugin has registered a leaderboard on this server."
       bad-place: "<red>The place has to be a number from <white>1</white> to <white><most></white>."
@@ -51,7 +51,7 @@ mannequin:
     hold:
       done: "<green><white><name></white> now holds what you hold. An empty hand empties its hand."
     pose:
-      usage: "<red>Which pose? <white><poses></white>."
+      usage: "<red>Which pose? Usage: <white>/mannequin statue pose <pose> [id]</white>, poses: <white><poses></white>."
       done: "<green><white><name></white> is <white><pose></white> now."
 
   price:
@@ -66,7 +66,8 @@ mannequin:
     done: "<green>Removed mannequin <white><id></white>."
 
   list:
-    empty: "<gray>You have no mannequins. Quite lonely in here."
+    header: "<gray>Your mannequins (<white><count></white>) — <white>/mannequin</white> opens them as a menu:"
+    empty: "<gray>You have no mannequins. Quite lonely in here. <white>/mannequin create</white> makes one where you stand."
     entry: "<white><id></white> <gray>— <white><name></white> <gray>in <white><world></white>"
 
   share:

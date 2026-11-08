@@ -15,7 +15,7 @@ Needs Java 25 and read access to `packages.tstieh.de` (server ids `packages-rele
 
 ## Plugins
 
-- `mannequin-standalone/target/RainsMannequins-1.14.0.jar` — also published as `de.raindancer.modules:mannequin-standalone:1.14.0`
+- `mannequin-standalone/target/RainsMannequins-1.16.0.jar` — also published as `de.raindancer.modules:mannequin-standalone:1.16.0`
 
 ## Versions
 

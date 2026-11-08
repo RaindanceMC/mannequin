@@ -259,7 +259,7 @@ public final class MannequinService implements IMannequinService {
 
         Location at = new Location(world, mannequin.x() + 0.5, mannequin.y(), mannequin.z() + 0.5,
                 mannequin.yaw(), 0f);
-        removeAllCopiesIn(world, mannequin.id());
+        removeAllCopiesIn(world, mannequin);
         LivingEntity entity = switch (mannequin.kind()) {
             case PLAYER -> world.spawn(at, org.bukkit.entity.Mannequin.class,
                     spawned -> configurePlayer(spawned, mannequin));
@@ -568,19 +568,34 @@ public final class MannequinService implements IMannequinService {
      * by {@link #idKey()}'s tag rather than simply "anything living standing here", so a player's own
      * pet or a real mob that wandered onto the same block is never touched.
      *
-     * <p>Searched across the whole world rather than a box around the anchor: a leftover that has
-     * drifted — pushed before {@code setGravity(false)} caught up with it, or standing where an
-     * anchor used to be before it was moved — is exactly as much a duplicate as one sitting on top of
-     * the new copy, and a tight radius around today's anchor can never find yesterday's. This is what
-     * "spawn exactly one, and kill whatever old one might still be around" means in practice: not
-     * "near where it should be" but "wearing this id, wherever it is".
+     * <p>Matched by id, not by position within the chunks searched: a leftover that was nudged before
+     * {@code setGravity(false)} caught up with it is as much a duplicate as one sitting on the new copy.
      */
-    private void removeAllCopiesIn(World world, String id) {
-        for (Entity found : world.getEntities()) {
-            if (found instanceof LivingEntity living
-                    && id.equals(living.getPersistentDataContainer()
-                            .get(idKey(), org.bukkit.persistence.PersistentDataType.STRING))) {
-                living.remove();
+    private void removeAllCopiesIn(World world, Mannequin mannequin) {
+        removeCopiesAround(world, mannequin, idKey());
+    }
+
+    /**
+     * Only the loaded chunks within one chunk of the anchor are searched, never {@code world.getEntities()}:
+     * that walks every entity of the world on every spawn, which on a chunk load means once per mannequin.
+     * Entities are never saved (see {@link #configureCommon}), so a leftover can only be one of this run's own,
+     * and a nudged one has not left the anchor's neighbourhood.
+     */
+    void removeCopiesAround(World world, Mannequin mannequin, org.bukkit.NamespacedKey key) {
+        int chunkX = mannequin.x() >> 4;
+        int chunkZ = mannequin.z() >> 4;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (!world.isChunkLoaded(chunkX + dx, chunkZ + dz)) {
+                    continue;
+                }
+                for (Entity found : world.getChunkAt(chunkX + dx, chunkZ + dz).getEntities()) {
+                    if (found instanceof LivingEntity living
+                            && mannequin.id().equals(living.getPersistentDataContainer()
+                                    .get(key, org.bukkit.persistence.PersistentDataType.STRING))) {
+                        living.remove();
+                    }
+                }
             }
         }
     }
