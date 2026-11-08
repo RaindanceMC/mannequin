@@ -11,7 +11,6 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
-import java.time.Duration;
 import java.util.List;
 
 /**
@@ -31,8 +30,6 @@ public final class SkinScreen extends Menu implements IMannequinScreen {
 
     private static final MiniMessage MINI = MiniMessage.miniMessage();
 
-    /** How long somebody has to type a username before the question is dropped. */
-    private static final Duration TO_ANSWER = Duration.ofSeconds(60);
 
     private final MannequinServices services;
     private Mannequin mannequin;
@@ -83,14 +80,8 @@ public final class SkinScreen extends Menu implements IMannequinScreen {
      * why a global username is exactly the shape of question a chooser cannot enumerate.
      */
     private void askForUsername() {
-        viewer.closeInventory();
-        boolean asking = services.core().prompts().ask(viewer.getUniqueId(), "mannequin", TO_ANSWER,
+        de.raindancer.core.ui.prompt.AnvilInput.open(viewer, "Whose skin? A Minecraft username", "", de.raindancer.core.ui.prompt.Parsers.name(16),
                 answer -> {
-                    if (answer == null || answer.isBlank() || answer.equalsIgnoreCase("cancel")) {
-                        services.messages().send(viewer, "mannequin.skin.left-as-it-is");
-                        open();
-                        return;
-                    }
                     services.messages().send(viewer, "mannequin.skin.looking-up", "name", answer);
                     services.mannequins().lookupAndApplySkinByUsername(mannequin.id(), answer,
                             resolvedName -> {
@@ -107,12 +98,6 @@ public final class SkinScreen extends Menu implements IMannequinScreen {
                             });
                 },
                 this::open);
-        if (!asking) {
-            services.messages().send(viewer, "mannequin.busy");
-            open();
-            return;
-        }
-        services.messages().send(viewer, "mannequin.skin.ask-name");
     }
 
     /**

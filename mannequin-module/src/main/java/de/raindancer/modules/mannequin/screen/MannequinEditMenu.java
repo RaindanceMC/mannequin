@@ -11,7 +11,6 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 
@@ -39,8 +38,6 @@ public final class MannequinEditMenu extends Menu implements IMannequinScreen {
 
     private static final MiniMessage MINI = MiniMessage.miniMessage();
 
-    /** How long somebody has to type a new name before the question is dropped. */
-    private static final Duration TO_ANSWER = Duration.ofSeconds(60);
 
     private final MannequinServices services;
     private final String id;
@@ -204,14 +201,8 @@ public final class MannequinEditMenu extends Menu implements IMannequinScreen {
      * {@code HomeEditMenu.askForANewName} already follows for the same shape of question.
      */
     private void askForANewName(Mannequin mannequin) {
-        viewer.closeInventory();
-        boolean asking = services.core().prompts().ask(viewer.getUniqueId(), "mannequin", TO_ANSWER,
+        de.raindancer.core.ui.prompt.AnvilInput.open(viewer, "A name for this mannequin", mannequin.displayName(), de.raindancer.core.ui.prompt.Parsers.text(32),
                 answer -> {
-                    if (answer == null || answer.isBlank() || answer.equalsIgnoreCase("cancel")) {
-                        services.messages().send(viewer, "mannequin.rename.left-as-it-is");
-                        open();
-                        return;
-                    }
                     Mannequin updated = mannequin.withDisplayName(answer.trim());
                     services.mannequins().save(updated);
                     services.mannequins().liveEntity(id).ifPresent(entity ->
@@ -220,12 +211,6 @@ public final class MannequinEditMenu extends Menu implements IMannequinScreen {
                     open();
                 },
                 this::open);
-        if (!asking) {
-            services.messages().send(viewer, "mannequin.busy");
-            open();
-            return;
-        }
-        services.messages().send(viewer, "mannequin.rename.ask-name");
     }
 
     private ItemStack headerIcon(Mannequin mannequin) {
