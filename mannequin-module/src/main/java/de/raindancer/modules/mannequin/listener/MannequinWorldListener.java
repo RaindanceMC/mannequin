@@ -58,6 +58,6 @@ public final class MannequinWorldListener implements IMannequinListener {
 
     @Override
     public String describe() {
-        return "spawning a world's mannequins when it loads, despawning them when it unloads — and so per chunk";
+        return "spawning a world's mannequins when it loads, despawning them when it unloads, and so per chunk";
     }
 }

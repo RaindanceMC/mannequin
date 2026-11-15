@@ -42,7 +42,7 @@ public final class LeaderboardScreen extends PaginatedMenu<PlayerTally> implemen
 
     @Override
     protected Component title() {
-        return MINI.deserialize("<dark_gray>Leaderboard — " + mannequin.displayName());
+        return MINI.deserialize("<dark_gray>Leaderboard: " + mannequin.displayName());
     }
 
     @Override

@@ -67,7 +67,7 @@ public final class LoadoutScreen extends Menu implements IMannequinScreen {
 
     @Override
     protected Component title() {
-        return MINI.deserialize("<dark_gray>Loadout — " + mannequin.displayName());
+        return MINI.deserialize("<dark_gray>Loadout: " + mannequin.displayName());
     }
 
     @Override
@@ -104,8 +104,8 @@ public final class LoadoutScreen extends Menu implements IMannequinScreen {
         super.decorate();
         toolbar(4, Icons.of(Material.CHEST, "<green>Copy my current gear",
                         "<gray>Every piece of armor and whatever is in your",
-                        "<gray>hands, material and enchants both —",
-                        "<gray>empty slots are cleared to match."),
+                        "<gray>hands, with enchants. Empty slots are",
+                        "<gray>cleared to match."),
                 click -> copyFromPlayer());
     }
 
@@ -287,7 +287,7 @@ public final class LoadoutScreen extends Menu implements IMannequinScreen {
 
         @Override
         protected Component title() {
-            return MINI.deserialize("<dark_gray>Enchants — " + spec.material());
+            return MINI.deserialize("<dark_gray>Enchants: " + spec.material());
         }
 
         @Override

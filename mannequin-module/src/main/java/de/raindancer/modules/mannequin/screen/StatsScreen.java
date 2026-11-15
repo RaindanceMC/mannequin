@@ -34,7 +34,7 @@ public final class StatsScreen extends Menu implements IMannequinScreen {
 
     @Override
     protected Component title() {
-        return MINI.deserialize("<dark_gray>Stats — " + mannequin.displayName());
+        return MINI.deserialize("<dark_gray>Stats: " + mannequin.displayName());
     }
 
     @Override

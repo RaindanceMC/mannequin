@@ -30,52 +30,48 @@ import org.bukkit.Material;
 public record MannequinSettings(
 
         @In("mannequin/access") @Title("Anybody may create a mannequin")
-        @Describe("On lets any player use /mannequin create. Off gates it behind the create "
-                + "permission, for a server that wants an admin or builder to place them instead.")
+        @Describe("On lets any player use /mannequin create. Off requires the create permission, so "
+                + "only admins or builders can place them.")
         @Key("open-creation")
         boolean openCreation,
 
         @In("mannequin/combat") @Title("Combo window") @Range(min = 0, max = 10000)
-        @Describe("Milliseconds. Two hits land inside this window count as the same combo streak; "
-                + "a gap longer than this starts a fresh one.")
+        @Describe("Milliseconds. Hits within this window count as one combo. A longer gap starts a "
+                + "new combo.")
         @Key("combo-window-millis")
         int comboWindowMillis,
 
         @In("mannequin/combat") @Title("Shield blocking")
-        @Describe("Whether a mannequin holding a shield actively raises it against a nearby "
-                + "attacker, the same way a player would.")
+        @Describe("Whether a mannequin holding a shield raises it against a nearby attacker.")
         @Key("blocking-enabled")
         boolean blockingEnabled,
 
         @In("mannequin/combat") @Title("Shield block range") @Range(min = 1, max = 16)
-        @Describe("Blocks. How close an attacker has to be before a mannequin holding a shield "
-                + "raises it.")
+        @Describe("Blocks. How close an attacker must be before a mannequin with a shield raises it.")
         @Key("shield-range-blocks")
         int shieldRangeBlocks,
 
         @In("mannequin/combat") @Title("One-shot threshold") @Range(min = 1, max = 1000)
-        @Describe("Damage that counts as 'would have killed a bare, full-health player' — also the "
-                + "calibration point the redstone signal is scaled against, so this damage produces "
-                + "the maximum signal, 15.")
+        @Describe("Damage that would have killed a bare, full-health player. The redstone signal is "
+                + "scaled to it: this damage gives the maximum signal, 15.")
         @Key("one-shot-threshold")
         int oneShotThreshold,
 
         @In("mannequin/combat") @Title("Redstone pulse length") @Range(min = 1, max = 200)
-        @Describe("Ticks. How long the barrel under an opted-in mannequin stays filled after a hit "
-                + "before it is cleared back to empty, so a comparator reads a pulse rather than a "
-                + "permanent state.")
+        @Describe("Ticks. How long the barrel under a mannequin with redstone on stays filled after a "
+                + "hit. The comparator reads a pulse, not a permanent state.")
         @Key("redstone-pulse-ticks")
         int redstonePulseTicks,
 
         @In("mannequin/life") @Title("Max health") @Range(min = 1, max = 2000)
-        @Describe("A normal player's own 20 by default. A single mannequin can be given its own "
-                + "health pool instead — see the loadout screen's presets, or any raw number.")
+        @Describe("Default is a player's 20. A single mannequin can have its own health instead: use "
+                + "the presets on its Health page, or any number.")
         @Key("max-health")
         double maxHealth,
 
         @In("mannequin/life") @Title("Respawn delay") @Range(min = 0, max = 3600)
-        @Describe("Seconds after a mannequin dies before an identical replacement — same block, "
-                + "same loadout, same skin — takes its place.")
+        @Describe("Seconds after a mannequin dies before an identical replacement (same block, "
+                + "loadout and skin) takes its place.")
         @Key("respawn-delay-seconds")
         int respawnDelaySeconds,
 

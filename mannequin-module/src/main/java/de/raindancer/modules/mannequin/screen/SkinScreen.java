@@ -42,7 +42,7 @@ public final class SkinScreen extends Menu implements IMannequinScreen {
 
     @Override
     protected Component title() {
-        return MINI.deserialize("<dark_gray>Skin — " + mannequin.displayName());
+        return MINI.deserialize("<dark_gray>Skin: " + mannequin.displayName());
     }
 
     @Override

@@ -80,7 +80,7 @@ public final class CreateMannequinScreen extends Menu implements IMannequinScree
         java.util.List<String> lore = kind.supportsLoadout()
                 ? java.util.List.of("<gray>Real health, a loadout screen,", "<gray>and everything else a dummy has.",
                         "", "<gray>Click to create one.")
-                : java.util.List.of("<gray>Real health and everything else a", "<gray>dummy has — no loadout for this one.",
+                : java.util.List.of("<gray>Real health and everything else a", "<gray>dummy has. This one has no loadout.",
                         "", "<gray>Click to create one.");
         java.util.List<String> shown = new java.util.ArrayList<>(lore);
         de.raindancer.core.social.economy.Money price = services.purchases().priceNow();

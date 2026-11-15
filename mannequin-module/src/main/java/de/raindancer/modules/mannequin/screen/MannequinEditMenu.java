@@ -180,9 +180,9 @@ public final class MannequinEditMenu extends Menu implements IMannequinScreen {
                         "<gray>You will be asked first."),
                 click -> new ConfirmScreen(services, viewer, this,
                         "<red>Remove " + mannequin.displayName() + "?",
-                        List.of("<gray>Everything about it — its loadout, its skin and",
-                                "<gray>its training tally — goes with it. You can",
-                                "<gray>make another, but not this one back."),
+                        List.of("<gray>Its loadout, skin and training tally go with",
+                                "<gray>it. You can make another, but you cannot",
+                                "<gray>get this one back."),
                         () -> {
                             services.registry().get(id).ifPresent(services.purchases()::retire);
                             // Back to the list: the page this came from is about a mannequin that
@@ -236,12 +236,12 @@ public final class MannequinEditMenu extends Menu implements IMannequinScreen {
         if (mannequin.claimId() == null) {
             return Icons.of(Material.GRASS_BLOCK, "<gray>Not part of a claim",
                     "<gray>Stand inside a claim you own and click",
-                    "<gray>this to make the mannequin part of it —",
-                    "<gray>it then shows up on that claim's own page too.");
+                    "<gray>this to make the mannequin part of it.",
+                    "<gray>It then also shows on that claim's page.");
         }
         String name = services.claimLink().nameOf(mannequin.claimId());
         return Icons.of(Material.GRASS_BLOCK, "<green>Part of " + (name == null ? "a claim" : name),
-                name == null ? "<red>That claim no longer exists." : "<gray>Shown on that claim's own page too.",
+                name == null ? "<red>That claim no longer exists." : "<gray>Also shown on that claim's page.",
                 "",
                 "<gray>Click to take it off that claim.");
     }
@@ -287,7 +287,7 @@ public final class MannequinEditMenu extends Menu implements IMannequinScreen {
         return Icons.of(Material.COMPARATOR, "<green>Redstone signal",
                 "<gray>A barrel one block directly under it",
                 "<gray>pulses 0-15, scaled to how hard the last",
-                "<gray>hit was — build a comparator beside the",
+                "<gray>hit was. Build a comparator beside the",
                 "<gray>barrel itself, at its own height, not at",
                 "<gray>the mannequin's feet.",
                 "",

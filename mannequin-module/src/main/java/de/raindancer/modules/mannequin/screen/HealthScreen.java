@@ -44,7 +44,7 @@ public final class HealthScreen extends PaginatedMenu<Map.Entry<String, Double>>
     @Override
     protected Component title() {
         Mannequin mannequin = mannequin();
-        return MINI.deserialize("<dark_gray>Health — " + (mannequin == null ? id : mannequin.displayName()));
+        return MINI.deserialize("<dark_gray>Health: " + (mannequin == null ? id : mannequin.displayName()));
     }
 
     @Override

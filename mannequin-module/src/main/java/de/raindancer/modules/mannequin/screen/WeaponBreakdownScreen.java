@@ -48,7 +48,7 @@ public final class WeaponBreakdownScreen extends PaginatedMenu<WeaponTally> impl
 
     @Override
     protected Component title() {
-        return MINI.deserialize("<dark_gray>Weapons — " + playerLabel());
+        return MINI.deserialize("<dark_gray>Weapons: " + playerLabel());
     }
 
     @Override
