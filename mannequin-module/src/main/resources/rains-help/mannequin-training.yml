@@ -2,7 +2,7 @@ id: mannequin-training
 title: Training on a mannequin
 summary: Combos, stats, the leaderboard, loadouts, skins, shields and a redstone pulse for your contraptions.
 intro: |
-  Hitting a dummy is easy. Hitting it well, and knowing how well, is the hobby.
+  Hit a dummy and see your damage, combo and stats.
 icon: DIAMOND_SWORD
 category: Games
 order: 31
@@ -24,7 +24,7 @@ sections:
   - question: What is the leaderboard?
     title: Leaderboard
     text: |
-      Who has hit this mannequin hardest — total damage, hits and the weapons used. Click somebody to see a breakdown per weapon: hits, total, average and highest hit, bare hands included.
+      Who has hit this mannequin hardest: total damage, hits and the weapons used. Click somebody to see a breakdown per weapon: hits, total, average and highest hit, bare hands included.
   - question: How do I dress a mannequin?
     title: Loadout
     text: |
@@ -34,15 +34,15 @@ sections:
     title: Shield
     when: mannequin:blocking-enabled
     text: |
-      Yes, if it holds a shield in its main hand it raises it against an attacker within {setting:mannequin:shield-range-blocks|count} blocks. A shield in its off hand is never raised. You can switch that on its edit page.
+      Yes. If it holds a shield in its main hand, it raises it against an attacker within {setting:mannequin:shield-range-blocks|count} blocks. A shield in its off hand is never raised. You can switch that on its edit page.
   - question: How do I change its skin?
     title: Skin
     text: |
-      {cmd:/mannequin skin <id>} (player kind only): pick an online player, type any Minecraft username — even somebody who has never joined — or reset to the default profile.
+      {cmd:/mannequin skin <id>} (player kind only): pick an online player, type any Minecraft username (even one that has never joined), or reset to the default profile.
   - question: Can I build redstone with it?
     title: Redstone
     text: |
-      Switch on <white>Redstone signal</white> on its page. A barrel is placed one block under its feet; after a hit it fills so a comparator beside it reads 0 to 15, scaled to the hit — the one-shot threshold is a 15. The signal is a pulse of {setting:mannequin:redstone-pulse-ticks|ticks}, not a state. Put the comparator next to the barrel itself, not at the mannequin's feet.
+      Switch on <white>Redstone signal</white> on its page. A barrel is placed one block under its feet; after a hit it fills so a comparator beside it reads 0 to 15, scaled to the hit. The one-shot threshold is a 15. The signal is a pulse of {setting:mannequin:redstone-pulse-ticks|ticks}, not a state. Put the comparator next to the barrel itself, not at the mannequin's feet.
   - question: Can I feed it potions?
     title: Potions and food
     text: |

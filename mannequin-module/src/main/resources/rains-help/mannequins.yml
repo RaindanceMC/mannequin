@@ -2,7 +2,7 @@ id: mannequins
 title: Training dummies
 summary: Place a mannequin, choose its kind, share it, and what happens when you hit it so hard it dies.
 intro: |
-  A target that does not hit back, does not leave, and is — thankfully — quite patient. Place one, dress it, hit it, and find out how good you really are.
+  A target that does not hit back and does not leave. Place one, dress it, hit it and see how much damage you do.
 icon: ARMOR_STAND
 category: Games
 order: 30
@@ -15,52 +15,52 @@ sections:
   - question: What is a mannequin?
     title: What it is
     text: |
-      A training dummy you place where you stand. It stands perfectly still, never wanders off, and hostile mobs leave it alone. You can hit it, equip it, give it a skin and read its stats. {run:/mannequin} opens a list of yours and the ones shared with you.
+      A training dummy you place where you stand. It stands still and hostile mobs leave it alone. You can hit it, equip it, give it a skin and read its stats. {run:/mannequin} opens a list of yours and the ones shared with you.
   - question: How do I make one?
     title: Creating
     text: |
-      Stand where it should be and type {cmd:/mannequin create [kind]} — it faces the way you look. {if:mannequin:open-creation}Anybody may make one.{else}Making one needs the <white>rainsmannequins.mannequin.create</white> permission — ask staff or a builder.{/if}
-      The kind is <white>player</white> (the default), <white>zombie</white>, <white>skeleton</white>, <white>wither</white> or <white>iron_golem</white>. A mistyped kind is told off rather than guessed.
+      Stand where it should be and type {cmd:/mannequin create [kind]}. It faces the way you look. {if:mannequin:open-creation}Anybody may make one.{else}Making one needs the <white>rainsmannequins.mannequin.create</white> permission. Ask staff or a builder.{/if}
+      The kind is <white>player</white> (the default), <white>zombie</white>, <white>skeleton</white>, <white>wither</white> or <white>iron_golem</white>. A mistyped kind is rejected.
       {if:mannequin:price}A mannequin costs {setting:mannequin:price|money}, taken when you make it and given back if it could not be placed.{else}It is free.{/if}
   - question: What are the kinds?
     title: Kinds
     text: |
-      <white>Player</white> wears a skin and can be dressed. <white>Zombie</white> and <white>skeleton</white> can be dressed too and do not burn in daylight. <white>Wither</white> and <white>iron golem</white> are big targets with more health — dressing and skins are not for them. All of them stay put: no gravity, no knockback, no AI.
+      <white>Player</white> wears a skin and can be dressed. <white>Zombie</white> and <white>skeleton</white> can be dressed too and do not burn in daylight. <white>Wither</white> and <white>iron golem</white> are big targets with more health. Dressing and skins do not work for them. All of them stay put: no gravity, no knockback, no AI.
   - question: How much health does it have?
     title: Health
     text: |
-      It is not invincible: {setting:mannequin:max-health|number} health points by default (a player's own 20 are 10 hearts), or a number of your own — the Health page of a mannequin has presets (zombie, spider, witch, iron golem, wither, ender dragon, warden …) and a field for any number.
+      It is not invincible: {setting:mannequin:max-health|number} health points by default (a player's own 20 are 10 hearts), or a number of your own. The Health page of a mannequin has presets (zombie, spider, witch, iron golem, wither, ender dragon, warden …) and a field for any number.
   - question: What happens when it dies?
     title: Death and respawn
     text: |
-      Nothing drops. {if:mannequin:respawn-delay-seconds > 0}After {setting:mannequin:respawn-delay-seconds|seconds} an identical one — same block, same loadout, same skin — takes its place.{else}An identical one takes its place at once.{/if} The training room never has a gap for long.
+      Nothing drops. {if:mannequin:respawn-delay-seconds > 0}After {setting:mannequin:respawn-delay-seconds|seconds} an identical one (same block, same loadout, same skin) takes its place.{else}An identical one takes its place at once.{/if}
   - question: How do I put up a statue of a player?
     title: Statues
     text: |
-      {cmd:/mannequin statue <player>} places one where you stand, facing your way — anybody this server knows, or any Minecraft name. Nothing can hurt it, not even a player in creative. It wears that player's skin and their name exactly as it shows above their head, colour, gradient and rank included, and keeps both up to date: a restyle shows at once, a new skin the next time they join. You can dress it; skin, stats, health and redstone are not for statues. Needs <white>rainsmannequins.mannequin.statue</white>.
+      {cmd:/mannequin statue <player>} places one where you stand, facing your way. Use any player this server knows, or any Minecraft name. Nothing can hurt it, not even a player in creative. It wears that player's skin and their name exactly as it shows above their head, colour, gradient and rank included, and keeps both up to date: a restyle shows at once, a new skin the next time they join. You can dress it. Skin, stats, health and redstone do not apply to statues. Needs <white>rainsmannequins.mannequin.statue</white>.
   - question: How do I put up a leaderboard statue?
     title: Leaderboard statues
     text: |
-      {cmd:/mannequin statue top <board> <place>} places a statue where you stand for a place from 1 to 10 on a leaderboard — for example {cmd:/mannequin statue top fishing:level 1} for the best fisher. Tab completion lists the boards plugins offer. The statue always shows whoever holds that place right now: it takes their skin and name when the place changes hands (checked every half minute and whenever somebody joins), and a line under the name reads like <white>#1 Fishing level · level 25</white>. While nobody holds the place it stands there as <white>Nobody yet</white> in the default skin. Pose, hold and remove work on it like on any statue. Same permission as other statues.
+      {cmd:/mannequin statue top <board> <place>} places a statue where you stand for a place from 1 to 10 on a leaderboard. Example: {cmd:/mannequin statue top fishing:level 1} for the best fisher. Tab completion lists the boards plugins offer. The statue shows whoever holds that place. It takes their skin and name when the place changes hands (checked every half minute and whenever somebody joins). A line under the name reads like <white>#1 Fishing level · level 25</white>. While nobody holds the place, it shows <white>Nobody yet</white> in the default skin. Pose, hold and remove work on it like on any statue. Same permission as other statues.
   - question: How do I pose or dress a statue?
     title: Posing statues
     text: |
-      Look at the statue (or stand right next to it) and type {cmd:/mannequin statue pose <pose>} — standing, sneaking, swimming, gliding or sleeping. {cmd:/mannequin statue hold} gives it exactly what is in your hands, name and look included; an empty hand empties its hand. A fishing rod in a statue's hand is always drawn cast. {cmd:/mannequin statue remove} takes it away at once. Each also takes a statue's id at the end, from anywhere.
+      Look at the statue (or stand next to it) and type {cmd:/mannequin statue pose <pose>}. Poses: standing, sneaking, swimming, gliding or sleeping. {cmd:/mannequin statue hold} gives it exactly what is in your hands, name and look included; an empty hand empties its hand. A fishing rod in a statue's hand is always drawn cast. {cmd:/mannequin statue remove} takes it away at once. Each also takes a statue's id at the end, from anywhere.
   - question: Can others use my mannequin?
     title: Sharing
     text: |
-      On a mannequin's page click <white>Shared with</white> and trust somebody: they can open and edit it, and remove it, just like you. They are told. Click a name there to stop trusting them. Mannequins shared with you show in your list too.
+      On a mannequin's page click <white>Shared with</white> and trust somebody: they can open and edit it, and remove it, just like you. They are told. Click a name there to stop trusting them. Mannequins shared with you also show in your list.
   - question: Can a mannequin belong to a claim?
     title: Claims
     when: "@module:claims"
     text: |
-      Yes. Stand inside a claim you own and click the claim button on the mannequin's page: it then appears on that claim's own page too. Click again to take it off.
+      Yes. Stand inside a claim you own and click the claim button on the mannequin's page. The mannequin then also shows on that claim's page. Click again to take it off.
   - question: How do I remove one?
     title: Removing
     text: |
-      {cmd:/mannequin remove <id>} asks you first; add <white>confirm</white> to do it. Its loadout, skin and tally go with it for good.
+      {cmd:/mannequin remove <id>} asks you first; add <white>confirm</white> to do it. Its loadout, skin and tally are deleted with it.
       {if:mannequin:refund-percent-on-remove > 0}The owner gets {setting:mannequin:refund-percent-on-remove|percent} of the price back.{/if} Owners and trusted players can remove it; staff with <white>rainsmannequins.mannequin.remove.any</white> can remove any.
   - question: Which mannequin commands are there?
     title: Commands
     text: |
-      {cmd:/mannequin list} lists yours with id, name and world. {cmd:/mannequin loadout <id>}, {cmd:/mannequin skin <id>} and {cmd:/mannequin stats <id>} open those pages — only for the owner and the trusted. {cmd:/mannequin remove <id>} as above. Tab shows your ids. The edit page also lets you rename it.
+      {cmd:/mannequin list} lists yours with id, name and world. {cmd:/mannequin loadout <id>}, {cmd:/mannequin skin <id>} and {cmd:/mannequin stats <id>} open those pages (owner and trusted players only). {cmd:/mannequin remove <id>} as above. Tab shows your ids. The edit page also lets you rename it.
