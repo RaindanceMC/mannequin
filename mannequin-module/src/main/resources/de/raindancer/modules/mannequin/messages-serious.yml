@@ -1,12 +1,1 @@
-# The serious wording for this module: the same keys as messages.yml, said plainly,
-# for a server whose Message tone (Core's /settings, Appearance) is SERIOUS.
-# Only lines that differ are here; every other key keeps its one wording in both tones.
-# A line the owner rewrote in plugins/RainsCore/messages.yml wins in both tones.
-
-mannequin:
-  create:
-    done: "<green>Created mannequin <white><id></white>."
-  list:
-    empty: "<gray>You have no mannequins."
-  claim:
-    linked: "<green><name></green> now belongs to <white><claim></white>."
+# One tone only: messages.yml already says everything plainly. This file stays empty because the wording contract still expects it.
